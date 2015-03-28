@@ -5,5 +5,9 @@
 # but you can also edit it by hand.
 
 meteor-platform
-autopublish
-insecure
+twbs:bootstrap
+vsivsi:job-collection
+numeral:numeral
+momentjs:moment
+accounts-ui
+accounts-password
