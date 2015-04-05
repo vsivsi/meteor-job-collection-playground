@@ -2,9 +2,158 @@ head
   title meteor-job-collection-playground
 
 body
-  h1 Welcome to Meteor!
-  +hello
 
-template(name="hello")
-  button Click Me
-  p You've pressed the button {{counter}} times.
+template(name="master")
+  +top
+  +yield "content"
+
+template(name="top")
+  div(class="container panel")
+    h3 job-collection Playground App
+    if currentUser
+      span(class="pull-right")
+        b UserId:
+        span(class="text-info") #{userId}}
+      b Token:
+        span(class="text-info") #{loginToken}
+    div.loginTemp
+      +loginButtons align="right"
+
+template(name="jobControls")
+  div.panel-body
+    button(type="button" class="btn btn-success clear-completed")
+      span(class="glyphicon glyphicon-ok")
+      | Clear Completed
+    button(type="button" class="btn btn-default pause-queue" data-toggle="button")
+      span(class="glyphicon glyphicon-pause")
+      | Pause all
+    button(type="button" class="btn btn-info restart-queue")
+      span(class="glyphicon glyphicon-repeat")
+      | Restart all
+    button(type="button" class="btn btn-warning cancel-queue")
+      span(class="glyphicon glyphicon-ban-circle")
+      | Cancel all
+    button(type="button" class="btn btn-danger remove-queue")
+      span(class="glyphicon glyphicon-remove")
+      | Remove all
+    button(type="button" class="btn btn-danger pull-right stop-queue")
+      span(class="glyphicon glyphicon-off")
+      | Shutdown Queue
+  div.panel-body
+    label(for="inputLater") When should it run:
+    input(class="form-control" id="inputLater" placeholder="Later...")
+    p
+    button(type="button" class="btn btn-default new-job")
+      span(class="glyphicon glyphicon-plus")
+      | Create job
+
+template(name="jobTable")
+  div(class="container panel panel-default")
+    div.panel-heading
+      h4 Job Collection
+    +jobControls
+    div.panel-body
+      table(class="table table-bordered table-striped")
+        thead
+          tr
+            th Type
+            th ID
+            th Run at
+            th Updated
+            th Pri
+            th Dep
+            th Attempts
+            th Repeats
+            th Status
+            th Actions
+        tbody
+          each jobEntries
+            +jobEntry
+          else
+            tr
+              td(colspan="20" align="center")
+                span.text-info No jobs in collection...
+
+template(name="jobEntry")
+  tr
+    with doc
+      td #{type}
+      td #{jobId}
+      td(class="#{futurePast}") #{runAt}
+      td #{lastUpdated}
+      td #{priority}
+      td #{numDepends} / #{numResolved}
+      td #{retried} / #{numRetries}
+      td #{repeated} / #{numRepeats}
+      td
+        if running
+          div.progress
+            div(class="progress-bar progress-bar-info"
+                role="progressbar"
+                min-width="60px"
+                aria-valuenow="#{progress.percent}"
+                aria-valuemin="0"
+                aria-valuemax="100"
+                style="width: {{progress.percent}}%;")
+              span(class="text-primary text-center") #{progress.percent}%
+        else
+          span(class="label label-#{statusBG}") #{status}
+      td
+        p.button-column
+        if pausable
+          button(type="button"
+                 class="btn pause-job btn-default btn-sm"
+                 aria-hidden="true"
+                 data-toggle="tooltip"
+                 data-placement="bottom"
+                 title="Pause Job")
+            span(class="glyphicon glyphicon-pause")
+        if resumable
+          button(type="button"
+                 class="btn resume-job btn-default btn-sm"
+                 aria-hidden="true"
+                 data-toggle="tooltip"
+                 data-placement="bottom"
+                 title="Resume Job")
+            span(class="glyphicon glyphicon-play")
+        if restartable
+          button(type="button"
+                 class="btn restart-job btn-info btn-sm"
+                 aria-hidden="true"
+                 data-toggle="tooltip"
+                 data-placement="bottom"
+                 title="Restart Job")
+            span(class="glyphicon glyphicon-repeat")
+        if rerunable
+          button(type="button"
+                 class="btn rerun-job btn-info btn-sm"
+                 aria-hidden="true"
+                 data-toggle="tooltip"
+                 data-placement="bottom"
+                 title="Rerun Job")
+            span(class="glyphicon glyphicon-refresh")
+        if cancellable
+          button(type="button"
+                 class="btn cancel-job btn-warning btn-sm"
+                 aria-hidden="true"
+                 data-toggle="tooltip"
+                 data-placement="bottom"
+                 title="Cancel Job")
+            span(class="glyphicon glyphicon-ban-circle")
+        if removable
+          if rerunable
+            button(type="button"
+                   class="btn remove-job btn-success btn-sm"
+                   aria-hidden="true"
+                   data-toggle="tooltip"
+                   data-placement="bottom"
+                   title="Remove Job")
+              span(class="glyphicon glyphicon-ok")
+          else
+            button(type="button"
+                   class="btn remove-job btn-danger btn-sm"
+                   aria-hidden="true"
+                   data-toggle="tooltip"
+                   data-placement="bottom"
+                   title="Remove Job")
+              span(class="glyphicon glyphicon-remove")
