@@ -13,8 +13,8 @@ template(name="top")
     if currentUser
       span(class="pull-right")
         b UserId:
-        span(class="text-info") #{userId}}
-      b Token:
+        span(class="text-info") #{userId}
+        b Token:
         span(class="text-info") #{loginToken}
     div.loginTemp
       +loginButtons align="right"

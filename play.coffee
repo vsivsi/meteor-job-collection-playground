@@ -18,10 +18,26 @@ Router.route '/', () ->
 
 if Meteor.isClient
 
+   Meteor.setInterval((() -> Session.set 'date', new Date()), 10000)
+
+   q = null
+   myType = 'testJob_null'
+
    Tracker.autorun () ->
       userId = Meteor.userId()
+      myType = "testJob_#{userId.substr(0,5)}"
       Meteor.subscribe 'allJobs', userId
+      q?.shutdown { level: 'hard' }
+      q = myJobs.processJobs myType, (job, cb) ->
+         job.done()
+         cb()
 
+   Template.top.helpers
+      loginToken: () ->
+         Meteor.userId()
+         Accounts._storedLoginToken()
+      userId: () ->
+         Meteor.userId()
 
    Template.jobTable.helpers
       jobEntries: () ->
@@ -137,6 +153,15 @@ if Meteor.isClient
 
       'click .new-job': (e, t) ->
          console.log 'new job', t.find("#inputLater").value
+         s = later.parse.text(t.find("#inputLater").value)
+         if s.error is -1
+            console.log "sched", s, "next", later.schedule(s).next()
+            job = new Job(myJobs, myType, { owner: Meteor.userId() })
+               .repeat({ schedule: s })
+               .save({cancelRepeats: true})
+         else
+            console.error "Bad schedule!"
+            t.find("#inputLater").value = ''
 
       'click .clear-completed': (e, t) ->
          console.log "clear completed"
@@ -219,6 +244,20 @@ if Meteor.isServer
             numMatches = myJobs.find({ _id: id, 'data.owner': userId }).count()
             return numMatches is 1
 
+         jobSave: (userId, method, params) ->
+            doc = params[0]
+            return doc.data.owner is userId
+
+         getWork: (userId, method, params) ->
+            params[0][0] is "testJob_#{userId.substr(0,5)}" and params[0].length is 1
+
+         worker: (userId, method, params) ->
+            if method is 'getWork'
+               return false
+            else
+               id = params[0]
+               numMatches = myJobs.find({ _id: id, 'data.owner': userId }).count()
+               return numMatches is 1
+
          stopJobs: (userId, method, params) ->
             return userId?
-
