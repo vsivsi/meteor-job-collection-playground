@@ -1,3 +1,9 @@
+############################################################################
+#     Copyright (C) 2015 by Vaughn Iverson
+#     meteor-job-collection-playground is free software released under the MIT/X11 license.
+#     See included LICENSE file for details.
+############################################################################
+
 myJobs = new JobCollection 'queue',
    idGeneration: 'MONGO'
    transform: (d) ->
@@ -25,7 +31,7 @@ if Meteor.isClient
    reactiveDate = new ReactiveVar(new Date())
    later.date.localTime()
 
-   Meteor.setInterval((() -> reactiveDate.set new Date()), 10000)
+   Meteor.setInterval((() -> reactiveDate.set new Date()), 5000)
 
    q = null
    myType = 'testJob_null'
@@ -36,9 +42,20 @@ if Meteor.isClient
       myType = "testJob#{suffix}"
       Meteor.subscribe 'allJobs', userId
       q?.shutdown { level: 'hard' }
-      q = myJobs.processJobs myType, (job, cb) ->
-         job.done()
-         cb()
+      q = myJobs.processJobs myType, { pollInterval: 100000000 }, (job, cb) ->
+         count = 0
+         int = Meteor.setInterval (() ->
+            count++
+            if count is 20
+               Meteor.clearInterval int
+               job.done()
+               cb()
+            else
+               job.progress(count, 20)
+         ), 500
+      obs = myJobs.find({ type: myType, status: 'ready' })
+      .observe
+         added: () -> q.trigger()
 
    Template.top.helpers
       loginToken: () ->
@@ -163,7 +180,8 @@ if Meteor.isClient
          parseState.get() is "has-success"
 
       nextTimes: () ->
-         for t in parseSched.get()
+         reactiveDate.get()
+         for t in parseSched.get().next(3)
             "#{moment(t).format("dddd, MMMM Do YYYY, h:mm:ss a")} (#{moment(t).fromNow()})"
 
    Template.newJobInput.events
@@ -176,8 +194,7 @@ if Meteor.isClient
                parseSched.set []
             else
                parseState.set "has-success"
-               o = later.schedule(s).next(3)
-               parseSched.set o
+               parseSched.set later.schedule(s)
          else
             parseState.set ""
             parseSched.set []
@@ -186,6 +203,7 @@ if Meteor.isClient
          s = later.parse.text(t.find("#inputLater").value)
          if s.error is -1
             job = new Job(myJobs, myType, { owner: Meteor.userId() })
+               .retry({ retries: 3, wait: 30000, backoff: 'exponential'})
                .repeat({ schedule: s })
                .save({cancelRepeats: true})
          else
@@ -206,23 +224,23 @@ if Meteor.isClient
             t.data.pauseJobs(ids) if ids.length > 0
 
       'click .cancel-queue': (e, t) ->
-         ids = t.data.find({ status: { $in: Job.jobStatusCancellable } }).map (d) -> d._id
+         ids = t.data.find({ status: { $in: Job.jobStatusCancellable }}, { fields: { _id: 1 }}).map (d) -> d._id
          t.data.cancelJobs(ids) if ids.length > 0
 
       'click .restart-queue': (e, t) ->
-         ids = t.data.find({ status: { $in: Job.jobStatusRestartable } }).map (d) -> d._id
+         ids = t.data.find({ status: { $in: Job.jobStatusRestartable }}, { fields: { _id: 1 }}).map (d) -> d._id
          t.data.restartJobs(ids) if ids.length > 0
 
       'click .remove-queue': (e, t) ->
-         ids = t.data.find({ status: { $in: Job.jobStatusRemovable } }).map (d) -> d._id
+         ids = t.data.find({ status: { $in: Job.jobStatusRemovable }}, { fields: { _id: 1 }}).map (d) -> d._id
          t.data.removeJobs(ids) if ids.length > 0
 
 #######################################################
 
 if Meteor.isServer
 
-   myJobs.setLogStream process.stdout
-   myJobs.promote 2500
+   # myJobs.setLogStream process.stdout
+   myJobs.promote 5000
 
    Meteor.startup () ->
 
@@ -235,7 +253,8 @@ if Meteor.isServer
          # This prevents a race condition on the client between Meteor.userId() and subscriptions to this publish
          # See: https://stackoverflow.com/questions/24445404/how-to-prevent-a-client-reactive-race-between-meteor-userid-and-a-subscription/24460877#24460877
          if this.userId is clientUserId
-            return myJobs.find({ 'data.owner': this.userId })
+            suffix = if this.userId then "_#{this.userId.substr(0,5)}" else ""
+            return myJobs.find({ type: "testJob#{suffix}", 'data.owner': this.userId })
          else
             return []
 
@@ -270,3 +289,46 @@ if Meteor.isServer
                numMatches = myJobs.find({ _id: id, 'data.owner': userId }).count()
                return numMatches is 1
 
+      new Job(myJobs, 'cleanup', {})
+         .repeat({ schedule: myJobs.later.parse.text("every 5 minutes") })
+         .save({cancelRepeats: true})
+
+      new Job(myJobs, 'autofail', {})
+         .repeat({ schedule: myJobs.later.parse.text("every 1 minute") })
+         .save({cancelRepeats: true})
+
+      q = myJobs.processJobs ['cleanup', 'autofail'], { pollInterval: 100000000 }, (job, cb) ->
+         current = new Date()
+         switch job.type
+            when 'cleanup'
+               current.setMinutes(current.getMinutes() - 5)
+               ids = myJobs.find({
+                  status:
+                     $in: Job.jobStatusRemovable
+                  updated:
+                     $lt: current},
+                  {fields: { _id: 1 }}).map (d) -> d._id
+               myJobs.removeJobs(ids) if ids.length > 0
+               console.warn "Removed #{ids.length} old jobs"
+               job.done("Removed #{ids.length} old jobs")
+               cb()
+            when 'autofail'
+               c = 0
+               current.setMinutes(current.getMinutes() - 1)
+               myJobs.find({
+                  status: 'running'
+                  updated:
+                     $lt: current})
+               .forEach (j) ->
+                  c++
+                  j.fail('Timed out by autofail')
+               console.warn "Failed #{c} stale running jobs"
+               job.done("Failed #{c} stale running jobs")
+               cb()
+            else
+               job.fail "Bad job type in worker"
+               cb()
+
+      myJobs.find({ type: { $in: ['cleanup', 'autofail']}, status: 'ready' })
+         .observe
+            added: () -> q.trigger()

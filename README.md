@@ -10,3 +10,5 @@ cd jcPlay
 meteor
 # Now point your browser to http://localhost:3000
 ```
+
+You can also find a hosted version of this app at [http://jcplayground.meteor.com](http://jcplayground.meteor.com)
