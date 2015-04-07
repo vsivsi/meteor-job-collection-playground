@@ -106,7 +106,7 @@ if Meteor.isClient
    Template.jobEntry.helpers
 
       jobId: () ->
-         this._id.valueOf()
+         "#{this._id.valueOf().substr(0,5)}…"
 
       statusBG: () ->
          {
