@@ -71,8 +71,8 @@ template(name="newJobInput")
       | job so it can be retried later. Completed and cancelled jobs are also automatically removed
       | by a "cleanup" job on the server after a short period of time. If you are not signed in,
       | then the job collection you see below is being shared with other public users and will
-      | update "live" with their actions. In this demo when you create a new job, all currently
-      | running or waiting jobs of that type are automatically cancelled by the server.
+      | update "live" with their actions. In this demo when you create a new repeating job, all
+      | preexisting running or waiting jobs of that type are automatically cancelled by the server.
 
 template(name="jobControls")
   div.panel-body
