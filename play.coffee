@@ -22,16 +22,17 @@ if Meteor.isClient
 
    parseState = new ReactiveVar("")
    parseSched = new ReactiveVar([])
+   reactiveDate = new ReactiveVar(new Date())
    later.date.localTime()
 
-   Meteor.setInterval((() -> Session.set 'date', new Date()), 10000)
+   Meteor.setInterval((() -> reactiveDate.set new Date()), 10000)
 
    q = null
    myType = 'testJob_null'
 
    Tracker.autorun () ->
       userId = Meteor.userId()
-      suffix = if userId then "_#{userId.substr(0,5)}" else "_null"
+      suffix = if userId then "_#{userId.substr(0,5)}" else ""
       myType = "testJob#{suffix}"
       Meteor.subscribe 'allJobs', userId
       q?.shutdown { level: 'hard' }
@@ -61,27 +62,21 @@ if Meteor.isClient
 
    Template.jobEntry.events
       'click .cancel-job': (e, t) ->
-         console.log "Cancelling job: #{this._id}"
          job = Template.currentData()
          job.cancel() if job
       'click .remove-job': (e, t) ->
-         console.log "Removing job: #{this._id}"
          job = Template.currentData()
          job.remove() if job
       'click .restart-job': (e, t) ->
-         console.log "Restarting job: #{this._id}"
          job = Template.currentData()
          job.restart() if job
       'click .rerun-job': (e, t) ->
-         console.log "Rerunning job: #{this._id}"
          job = Template.currentData()
          job.rerun({ wait: 15000 }) if job
       'click .pause-job': (e, t) ->
-         console.log "Pausing job: #{this._id}"
          job = Template.currentData()
          job.pause() if job
       'click .resume-job': (e, t) ->
-         console.log "Resuming job: #{this._id}"
          job = Template.currentData()
          job.resume() if job
 
@@ -117,15 +112,15 @@ if Meteor.isClient
       numRetries: () -> isInfinity this.retries
 
       runAt: () ->
-         Session.get 'date'
+         reactiveDate.get()
          moment(this.after).fromNow()
 
       lastUpdated: () ->
-         Session.get 'date'
+         reactiveDate.get()
          moment(this.updated).fromNow()
 
       futurePast: () ->
-         Session.get 'date'
+         reactiveDate.get()
          if this.after > new Date()
             "text-danger"
          else
@@ -183,59 +178,43 @@ if Meteor.isClient
                parseState.set "has-success"
                o = later.schedule(s).next(3)
                parseSched.set o
-               console.log o
          else
             parseState.set ""
             parseSched.set []
 
       'click #newJob': (e, t) ->
-         console.log 'new job', t.find("#inputLater").value
          s = later.parse.text(t.find("#inputLater").value)
          if s.error is -1
-            console.log "sched2", s, "next", later.schedule(s).next()
             job = new Job(myJobs, myType, { owner: Meteor.userId() })
                .repeat({ schedule: s })
                .save({cancelRepeats: true})
          else
-            console.error "Bad schedule!"
             parseState.set "has-error"
 
    Template.jobControls.events
 
       'click .clear-completed': (e, t) ->
-         console.log "clear completed"
          ids = t.data.find({ status: 'completed' },{ fields: { _id: 1 }}).map (d) -> d._id
-         console.log "clearing: #{ids.length} jobs"
          t.data.removeJobs(ids) if ids.length > 0
 
       'click .pause-queue': (e, t) ->
          if $(e.target).hasClass 'active'
-            console.log "resume queue"
             ids = t.data.find({ status: 'paused' },{ fields: { _id: 1 }}).map (d) -> d._id
-            console.log "resuming: #{ids.length} jobs"
             t.data.resumeJobs(ids) if ids.length > 0
          else
-            console.log "pause queue"
             ids = t.data.find({ status: { $in: Job.jobStatusPausable }}, { fields: { _id: 1 }}).map (d) -> d._id
-            console.log "pausing: #{ids.length} jobs"
             t.data.pauseJobs(ids) if ids.length > 0
 
       'click .cancel-queue': (e, t) ->
-         console.log "cancel all"
          ids = t.data.find({ status: { $in: Job.jobStatusCancellable } }).map (d) -> d._id
-         console.log "cancelling: #{ids.length} jobs"
          t.data.cancelJobs(ids) if ids.length > 0
 
       'click .restart-queue': (e, t) ->
-         console.log "restart all"
          ids = t.data.find({ status: { $in: Job.jobStatusRestartable } }).map (d) -> d._id
-         console.log "restarting: #{ids.length} jobs"
-         t.data.restartJobs(ids, (e, r) -> console.log("Restart returned", r)) if ids.length > 0
+         t.data.restartJobs(ids) if ids.length > 0
 
       'click .remove-queue': (e, t) ->
-         console.log "remove all"
          ids = t.data.find({ status: { $in: Job.jobStatusRemovable } }).map (d) -> d._id
-         console.log "removing: #{ids.length} jobs"
          t.data.removeJobs(ids) if ids.length > 0
 
 #######################################################
@@ -280,7 +259,7 @@ if Meteor.isServer
             return doc.data.owner is userId
 
          getWork: (userId, method, params) ->
-            suffix = if userId then "_#{userId.substr(0,5)}" else "_null"
+            suffix = if userId then "_#{userId.substr(0,5)}" else ""
             params[0][0] is "testJob#{suffix}" and params[0].length is 1
 
          worker: (userId, method, params) ->
