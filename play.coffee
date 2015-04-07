@@ -25,7 +25,8 @@ if Meteor.isClient
 
    Tracker.autorun () ->
       userId = Meteor.userId()
-      myType = "testJob_#{userId.substr(0,5)}"
+      suffix = if userId then "_#{userId.substr(0,5)}" else "_null"
+      myType = "testJob#{suffix}"
       Meteor.subscribe 'allJobs', userId
       q?.shutdown { level: 'hard' }
       q = myJobs.processJobs myType, (job, cb) ->
@@ -249,7 +250,9 @@ if Meteor.isServer
             return doc.data.owner is userId
 
          getWork: (userId, method, params) ->
-            params[0][0] is "testJob_#{userId.substr(0,5)}" and params[0].length is 1
+            console.log 
+            suffix = if userId then "_#{userId.substr(0,5)}" else "_null"
+            params[0][0] is "testJob#{suffix}" and params[0].length is 1
 
          worker: (userId, method, params) ->
             if method is 'getWork'
