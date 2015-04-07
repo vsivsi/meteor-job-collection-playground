@@ -60,17 +60,6 @@ template(name="newJobInput")
             tr
               td
                 | #{.}
-    span.text-muted.small
-      u Fine print:
-      | Jobs only run when a client is connected. This is because all "work" in this demo is
-      | performed in the client code. If you close or reload your browser page while a job is
-      | running (and your client was the one working on the job) then that job will not complete,
-      | and after a few minutes a "reaper" job on the server will notice and "auto-fail" the
-      | job so it can be retried later. Completed and cancelled jobs are also automatically removed
-      | by a "cleanup" job on the server after a short period of time. If you are not signed in,
-      | then the job collection you see below is being shared with other public users and will
-      | update "live" with their actions. In this demo when you create a new repeating job, all
-      | preexisting running or waiting jobs of that type are automatically cancelled by the server.
 
 template(name="jobControls")
   div.panel-body
@@ -97,6 +86,18 @@ template(name="jobTable")
     +jobControls
     div.panel-body
       h4 Job Collection
+      span.text-muted.small
+        u Fine print:
+        | Jobs only run when a client is connected. This is because all "work" in this demo is
+        | performed in the client code. If you close or reload your browser page while a job is
+        | running (and your client was the one working on the job) then that job will not complete,
+        | and after a few minutes a "reaper" job on the server will notice and "auto-fail" the
+        | job so it can be retried later. Completed and cancelled jobs are also automatically removed
+        | by a "cleanup" job on the server after a short period of time. If you are not signed in,
+        | then the job collection you see below is being shared with other public users and will
+        | update "live" with their actions. In this demo when you create a new repeating job, all
+        | preexisting running or waiting jobs of that type are automatically cancelled by the server.
+      p
       table(class="table table-bordered table-striped table-responsive")
         thead
           tr
