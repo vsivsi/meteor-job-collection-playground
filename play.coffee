@@ -309,7 +309,7 @@ if Meteor.isServer
                      $lt: current},
                   {fields: { _id: 1 }}).map (d) -> d._id
                myJobs.removeJobs(ids) if ids.length > 0
-               console.warn "Removed #{ids.length} old jobs"
+               # console.warn "Removed #{ids.length} old jobs"
                job.done("Removed #{ids.length} old jobs")
                cb()
             when 'autofail'
@@ -322,7 +322,7 @@ if Meteor.isServer
                .forEach (j) ->
                   c++
                   j.fail('Timed out by autofail')
-               console.warn "Failed #{c} stale running jobs"
+               # console.warn "Failed #{c} stale running jobs"
                job.done("Failed #{c} stale running jobs")
                cb()
             else
