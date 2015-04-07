@@ -54,6 +54,7 @@ template(name="newJobInput")
 
 template(name="jobControls")
   div.panel-body
+    h4 Collection Controls
     button(type="button" class="btn btn-success clear-completed")
       span(class="glyphicon glyphicon-ok")
       | Clear Completed
@@ -73,13 +74,15 @@ template(name="jobControls")
 template(name="jobTable")
   div(class="container panel panel-default")
     +newJobInput
+    +jobControls
     div.panel-body
+      h4 Job Collection
       table(class="table table-bordered table-striped")
         thead
           tr
             th Type
             th ID
-            th Run at
+            th Run
             th Updated
             th Pri
             th Dep
@@ -94,8 +97,6 @@ template(name="jobTable")
             tr
               td(colspan="20" align="center")
                 span.text-info No jobs in collection...
-    +jobControls
-
 
 template(name="jobEntry")
   tr

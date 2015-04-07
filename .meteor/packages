@@ -15,5 +15,4 @@ accounts-password
 coffeescript
 mquandalle:jade
 iron:router
-mrt:later
 reactive-var
