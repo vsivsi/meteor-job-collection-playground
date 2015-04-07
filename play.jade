@@ -22,6 +22,11 @@ template(name="top")
         span(class="text-info") #{userId}
         b Token:
         span(class="text-info") #{loginToken}
+    else
+      span(class="pull-right")
+        b You are currently in the public playground, create
+        br
+        b an account and sign in to have a private space.
     div.loginTemp
       +loginButtons align="right"
 
@@ -57,6 +62,17 @@ template(name="newJobInput")
             tr
               td
                 | #{.}
+    span.text-muted.small
+      u Fine print:
+      | Jobs only run when a client is connected. This is because all "work" in this demo is
+      | performed in the client code. If you close or reload your browser page while a job is
+      | running (and your client was the one working on the job) then that job will not complete,
+      | and after a few minutes a "reaper" job on the server will notice and "auto-fail" the
+      | job so it can be retried later. Completed and cancelled jobs are also automatically removed
+      | by a "cleanup" job on the server after a short period of time. If you are not signed in,
+      | then the job collection you see below is being shared with other public users and will
+      | update "live" with their actions. In this demo when you create a new job, all currently
+      | running or waiting jobs of that type are automatically cancelled by the server.
 
 template(name="jobControls")
   div.panel-body
@@ -90,8 +106,6 @@ template(name="jobTable")
             th ID
             th Run
             th Updated
-            th Pri
-            th Dep
             th Attempts
             th Repeats
             th Status
@@ -111,8 +125,6 @@ template(name="jobEntry")
       td #{jobId}
       td(class="#{futurePast}") #{runAt}
       td #{lastUpdated}
-      td #{priority}
-      td #{numDepends} / #{numResolved}
       td #{retried} / #{numRetries}
       td #{repeated} / #{numRepeats}
       td

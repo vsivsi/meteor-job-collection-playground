@@ -104,11 +104,6 @@ if Meteor.isClient
          val
 
    Template.jobEntry.helpers
-      numDepends: () ->
-         this.depends?.length
-
-      numResolved: () ->
-         this.resolved?.length
 
       jobId: () ->
          this._id.valueOf()
