@@ -51,16 +51,16 @@ if Meteor.isClient
                job.done()
                cb()
             else
-               job.progress(count, 20)
+               job.progress count, 20, (err, res) ->
+                  if err or not res
+                     Meteor.clearInterval int
+                     job.fail('Progress update failed', () -> cb())
          ), 500
       obs = myJobs.find({ type: myType, status: 'ready' })
       .observe
          added: () -> q.trigger()
 
    Template.top.helpers
-      loginToken: () ->
-         Meteor.userId()
-         Accounts._storedLoginToken()
       userId: () ->
          Meteor.userId()
 
