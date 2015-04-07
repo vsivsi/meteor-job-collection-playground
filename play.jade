@@ -19,6 +19,39 @@ template(name="top")
     div.loginTemp
       +loginButtons align="right"
 
+template(name="newJobInput")
+  div.panel-body
+    h4 Create a new repeating job
+      span.text-muted
+        | (using Later.js
+        a(target="_blank" href="https://bunkat.github.io/later/parsers.html#text")
+          | Text parser
+        | input)
+    br
+    label(for="inputLater")
+      | When should it run?
+      span.text-muted (all times are local):
+    div(class="input-group #{inputParseState}")
+      input(class="form-control" id="inputLater" placeholder="e.g. Every 5 minutes")
+      span(class="input-group-addon" id="newJob")
+        if inputReady
+          span(class="glyphicon glyphicon-time")
+          |  Create new job
+        else
+          span(class="glyphicon glyphicon-remove-circle")
+    p
+    if inputReady
+      table(class="table table-bordered")
+        thead
+          tr
+            th
+              | Next 3 runtimes:
+        tbody
+          each nextTimes
+            tr
+              td
+                | #{.}
+
 template(name="jobControls")
   div.panel-body
     button(type="button" class="btn btn-success clear-completed")
@@ -36,21 +69,10 @@ template(name="jobControls")
     button(type="button" class="btn btn-danger remove-queue")
       span(class="glyphicon glyphicon-remove")
       | Remove all
-    button(type="button" class="btn btn-danger pull-right stop-queue")
-      span(class="glyphicon glyphicon-off")
-      | Shutdown Queue
-  div(class="panel-body form-inline")
-    label(for="inputLater") When should it run:
-    input(class="form-control" id="inputLater" placeholder="e.g. Every 5 minutes" style="width: 75%")
-    button(type="button" class="btn btn-default new-job")
-      span(class="glyphicon glyphicon-plus")
-      | Create job
 
 template(name="jobTable")
   div(class="container panel panel-default")
-    div.panel-heading
-      h4 Job Collection
-    +jobControls
+    +newJobInput
     div.panel-body
       table(class="table table-bordered table-striped")
         thead
@@ -72,6 +94,8 @@ template(name="jobTable")
             tr
               td(colspan="20" align="center")
                 span.text-info No jobs in collection...
+    +jobControls
+
 
 template(name="jobEntry")
   tr

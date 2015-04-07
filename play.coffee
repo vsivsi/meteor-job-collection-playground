@@ -18,6 +18,10 @@ Router.route '/', () ->
 
 if Meteor.isClient
 
+   parseState = new ReactiveVar("")
+   parseSched = new ReactiveVar([])
+   later.date.localTime()
+
    Meteor.setInterval((() -> Session.set 'date', new Date()), 10000)
 
    q = null
@@ -41,9 +45,10 @@ if Meteor.isClient
          Meteor.userId()
 
    Template.jobTable.helpers
+
       jobEntries: () ->
          # Reactively populate the table
-         this.find({})
+         this.find({}, { sort: { after: -1 }})
 
    Template.jobEntry.rendered = () ->
       this.$('.button-column').tooltip({selector: 'button[data-toggle=tooltip]'})
@@ -150,19 +155,47 @@ if Meteor.isClient
       resumable: () ->
          this.status is 'paused'
 
-   Template.jobControls.events
+   Template.newJobInput.helpers
 
-      'click .new-job': (e, t) ->
+      inputParseState: () ->
+         parseState.get()
+
+      inputReady: () ->
+         parseState.get() is "has-success"
+
+      nextTimes: () ->
+         "#{moment(t).format("dddd, MMMM Do YYYY, h:mm:ss a")} (#{moment(t).fromNow()})" for t in parseSched.get()
+
+   Template.newJobInput.events
+
+      'input #inputLater': (e, t) ->
+         if e.target.value
+            s = later.parse.text(e.target.value)
+            unless s.error is -1
+               parseState.set "has-warning"
+               parseSched.set []
+            else
+               parseState.set "has-success"
+               o = later.schedule(s).next(3)
+               parseSched.set o
+               console.log o
+         else
+            parseState.set ""
+            parseSched.set []
+
+      'click #newJob': (e, t) ->
          console.log 'new job', t.find("#inputLater").value
          s = later.parse.text(t.find("#inputLater").value)
          if s.error is -1
-            console.log "sched", s, "next", later.schedule(s).next()
+            console.log "sched2", s, "next", later.schedule(s).next()
             job = new Job(myJobs, myType, { owner: Meteor.userId() })
                .repeat({ schedule: s })
                .save({cancelRepeats: true})
          else
             console.error "Bad schedule!"
-            t.find("#inputLater").value = ''
+            parseState.set "has-error"
+
+   Template.jobControls.events
 
       'click .clear-completed': (e, t) ->
          console.log "clear completed"
@@ -181,14 +214,6 @@ if Meteor.isClient
             ids = t.data.find({ status: { $in: t.data.jobStatusPausable }}, { fields: { _id: 1 }}).map (d) -> d._id
             console.log "pausing: #{ids.length} jobs"
             t.data.pauseJobs(ids) if ids.length > 0
-
-      'click .stop-queue': (e, t) ->
-         unless $(e.target).hasClass 'active'
-            console.log "stop queue"
-            t.data.stopJobs()
-         else
-            console.log "restart queue"
-            t.data.stopJobs(0)
 
       'click .cancel-queue': (e, t) ->
          console.log "cancel all"
@@ -250,7 +275,6 @@ if Meteor.isServer
             return doc.data.owner is userId
 
          getWork: (userId, method, params) ->
-            console.log 
             suffix = if userId then "_#{userId.substr(0,5)}" else "_null"
             params[0][0] is "testJob#{suffix}" and params[0].length is 1
 
@@ -262,5 +286,3 @@ if Meteor.isServer
                numMatches = myJobs.find({ _id: id, 'data.owner': userId }).count()
                return numMatches is 1
 
-         stopJobs: (userId, method, params) ->
-            return userId?
