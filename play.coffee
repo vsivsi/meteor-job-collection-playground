@@ -177,22 +177,36 @@ if Meteor.isClient
       nextTimes: () ->
          reactiveDate.get()
          for t in parseSched.get().next(3)
-            "#{moment(t).format("dddd, MMMM Do YYYY, h:mm:ss a")} (#{moment(t).fromNow()})"
+            "#{moment(t).format("dddd, MMMM Do YYYY, h:mm:ss")} (#{moment(t).fromNow()})"
 
    Template.newJobInput.events
 
       'input #inputLater': (e, t) ->
-         if e.target.value
-            s = later.parse.text(e.target.value)
-            unless s.error is -1
-               parseState.set "has-warning"
-               parseSched.set []
-            else
-               parseState.set "has-success"
-               parseSched.set later.schedule(s)
-         else
+         val = e.target.value.trim() 
+         unless val
             parseState.set ""
             parseSched.set []
+         else
+            s = later.parse.text val
+            if s.error is -1
+               parseState.set "has-success"
+               parseSched.set later.schedule(s)
+            else
+               re = /^(?:\*|\d{1,2})(?:(?:(?:[\/-]\d{1,2})?)|(?:,\d{1,2})+)\ *(?:\ (?:\*|\d{1,2})(?:(?:(?:[\/-]\d{1,2})?)|(?:,\d{1,2})+)\ *)*$/
+               m = val.match re
+               sp = val.split /\ +/ 
+
+               if m and 5 <= sp.length <= 6 
+                  sCron = later.parse.cron val, sp.length is 6
+                  if sCron
+                     parseState.set "has-success"
+                     parseSched.set later.schedule(sCron)
+                  else
+                     parseState.set parseState.set "has-warning"
+                     parseSched.set []
+               else
+                  parseState.set "has-warning"
+                  parseSched.set []
 
       'click #newJob': (e, t) ->
          s = later.parse.text(t.find("#inputLater").value)

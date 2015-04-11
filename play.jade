@@ -32,16 +32,19 @@ template(name="newJobInput")
   div.panel-body
     h4 Create a new repeating job
       span.text-muted
-        | (using Later.js
+        | using 
         a(target="_blank" href="https://bunkat.github.io/later/parsers.html#text")
-          | Text parser
-        | input)
-    br
+          | Later.js Text parser
+        | input, or a 
+        a(target="_blank" href="http://en.wikipedia.org/wiki/Cron#CRON_expression")
+          | CRON expression
+        |:
+    p
     label(for="inputLater")
       | When should it run?
       span.text-muted (all times are local):
     div(class="input-group #{inputParseState}")
-      input(class="form-control" id="inputLater" placeholder="e.g. Every 5 minutes")
+      input(class="form-control" id="inputLater" placeholder="e.g. 'every 5 minutes' or '*/5 * * * *'")
       span(class="input-group-addon" id="newJob")
         if inputReady
           span(class="glyphicon glyphicon-time")
