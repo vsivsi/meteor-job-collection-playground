@@ -179,6 +179,15 @@ if Meteor.isClient
          for t in parseSched.get().next(3)
             "#{moment(t).format("dddd, MMMM Do YYYY, h:mm:ss")} (#{moment(t).fromNow()})"
 
+   validateCRON = (val) ->
+      re = /^(?:\*|\d{1,2})(?:(?:(?:[\/-]\d{1,2})?)|(?:,\d{1,2})+)\ *(?:\ (?:\*|\d{1,2})(?:(?:(?:[\/-]\d{1,2})?)|(?:,\d{1,2})+)\ *)*$/
+      return null unless val.match re
+      sp = val.split /\ +/
+      if 5 <= sp.length <= 6
+         return sp.length is 6
+      else
+         return null 
+
    Template.newJobInput.events
 
       'input #inputLater': (e, t) ->
@@ -192,12 +201,9 @@ if Meteor.isClient
                parseState.set "has-success"
                parseSched.set later.schedule(s)
             else
-               re = /^(?:\*|\d{1,2})(?:(?:(?:[\/-]\d{1,2})?)|(?:,\d{1,2})+)\ *(?:\ (?:\*|\d{1,2})(?:(?:(?:[\/-]\d{1,2})?)|(?:,\d{1,2})+)\ *)*$/
-               m = val.match re
-               sp = val.split /\ +/ 
-
-               if m and 5 <= sp.length <= 6 
-                  sCron = later.parse.cron val, sp.length is 6
+               cronFlag = validateCRON val
+               if cronFlag?
+                  sCron = later.parse.cron val, cronFlag
                   if sCron
                      parseState.set "has-success"
                      parseSched.set later.schedule(sCron)
@@ -209,7 +215,13 @@ if Meteor.isClient
                   parseSched.set []
 
       'click #newJob': (e, t) ->
-         s = later.parse.text(t.find("#inputLater").value)
+         val = t.find("#inputLater").value
+         cronFlag = validateCRON val
+         if cronFlag?
+            s = later.parse.cron val, cronFlag
+            s.error = -1 if s?
+         else
+            s = later.parse.text(val)
          if s.error is -1
             job = new Job(myJobs, myType, { owner: Meteor.userId() })
                .retry({ retries: 3, wait: 30000, backoff: 'exponential'})
