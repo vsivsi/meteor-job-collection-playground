@@ -228,7 +228,6 @@ if Meteor.isClient
          else
             s = later.parse.text(val)
          if s.error is -1
-            console.log "Schedule", s
             job = new Job(myJobs, myType, { owner: Meteor.userId() })
                .retry({ retries: 3, wait: 30000, backoff: 'exponential'})
                .repeat({ schedule: s })
