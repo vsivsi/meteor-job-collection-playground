@@ -29,7 +29,6 @@ if Meteor.isClient
    parseState = new ReactiveVar("")
    parseSched = new ReactiveVar([])
    reactiveDate = new ReactiveVar(new Date())
-   later.date.localTime()
 
    Meteor.setInterval((() -> reactiveDate.set new Date()), 5000)
 
@@ -177,7 +176,7 @@ if Meteor.isClient
       nextTimes: () ->
          reactiveDate.get()
          for t in parseSched.get().next(3)
-            "#{moment(t).format("dddd, MMMM Do YYYY, h:mm:ss")} (#{moment(t).fromNow()})"
+            "#{moment(t).calendar()} (local time), #{moment(t).fromNow()}. [#{moment(t).toISOString()}]"
 
    validateCRON = (val) ->
       re = /^(?:\*|\d{1,2})(?:(?:(?:[\/-]\d{1,2})?)|(?:,\d{1,2})+)\ *(?:\ (?:\*|\d{1,2})(?:(?:(?:[\/-]\d{1,2})?)|(?:,\d{1,2})+)\ *)*$/
@@ -197,6 +196,12 @@ if Meteor.isClient
             parseSched.set []
          else
             s = later.parse.text val
+            # The following is to work around this bug:
+            # https://github.com/bunkat/later/issues/97
+            try
+               later.schedule(s).next()
+            catch
+               s = {}
             if s.error is -1
                parseState.set "has-success"
                parseSched.set later.schedule(s)
@@ -223,6 +228,7 @@ if Meteor.isClient
          else
             s = later.parse.text(val)
          if s.error is -1
+            console.log "Schedule", s
             job = new Job(myJobs, myType, { owner: Meteor.userId() })
                .retry({ retries: 3, wait: 30000, backoff: 'exponential'})
                .repeat({ schedule: s })

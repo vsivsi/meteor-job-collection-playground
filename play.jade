@@ -41,7 +41,7 @@ template(name="newJobInput")
     p
     label(for="inputLater")
       | When should it run?
-      span.text-muted (all times are local):
+      span.text-muted (all times are UTC):
     div(class="input-group #{inputParseState}")
       input(class="form-control" id="inputLater" placeholder="e.g. 'every 5 minutes' or '*/5 * * * *'")
       span(class="input-group-addon" id="newJob")
