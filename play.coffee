@@ -185,12 +185,12 @@ if Meteor.isClient
       if 5 <= sp.length <= 6
          return sp.length is 6
       else
-         return null 
+         return null
 
    Template.newJobInput.events
 
       'input #inputLater': (e, t) ->
-         val = e.target.value.trim() 
+         val = e.target.value.trim()
          unless val
             parseState.set ""
             parseSched.set []
