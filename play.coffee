@@ -307,7 +307,7 @@ if Meteor.isClient
 
 if Meteor.isServer
 
-   # myJobs.setLogStream process.stdout
+   myJobs.setLogStream process.stdout
    myJobs.promote 5000
 
    Meteor.startup () ->
