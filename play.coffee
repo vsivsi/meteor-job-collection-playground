@@ -21,14 +21,21 @@ Router.configure
 Router.route '/', () ->
 
    this.render 'jobTable',
-      to: 'content'
+      to: 'jobContent'
       data: myJobs
+
+   this.render 'workerPanel',
+      to: 'workerContent'
+      data: {}
 
 if Meteor.isClient
 
    parseState = new ReactiveVar("")
    parseSched = new ReactiveVar([])
    reactiveDate = new ReactiveVar(new Date())
+
+   workerState = new ReactiveVar undefined
+   workerJob = new ReactiveVar null
 
    Meteor.setInterval((() -> reactiveDate.set new Date()), 5000)
 
@@ -42,18 +49,27 @@ if Meteor.isClient
       Meteor.subscribe 'allJobs', userId
       q?.shutdown { level: 'hard' }
       q = myJobs.processJobs myType, { pollInterval: 100000000 }, (job, cb) ->
-         count = 0
+         workerJob.set job.doc._id
+         workerState.set 0
          int = Meteor.setInterval (() ->
-            count++
-            if count is 20
+            unless workerJob.get()
                Meteor.clearInterval int
-               job.done()
-               cb()
+               workerState.set undefined
+               job.fail('User failed job', () -> cb())
             else
-               job.progress count, 20, (err, res) ->
-                  if err or not res
-                     Meteor.clearInterval int
-                     job.fail('Progress update failed', () -> cb())
+               workerState.set(workerState.get() + 1)
+               if workerState.get() is 20
+                  workerState.set undefined
+                  workerJob.set null
+                  Meteor.clearInterval int
+                  job.done()
+                  cb()
+               else
+                  job.progress workerState.get(), 20, (err, res) ->
+                     if err or not res
+                        Meteor.clearInterval int
+                        workerJob.set null
+                        job.fail('Progress update failed', () -> cb())
          ), 500
       obs = myJobs.find({ type: myType, status: 'ready' })
       .observe
@@ -62,6 +78,32 @@ if Meteor.isClient
    Template.top.helpers
       userId: () ->
          Meteor.userId()
+
+   Template.workerPanel.helpers
+      status: () ->
+         state = workerState.get()
+         unless state?
+            null
+         else
+            return 100*state/20
+
+      type: () ->
+         state = workerState.get()
+         unless state?
+            return "default"
+         else
+            return "info"
+
+      id: () ->
+         id = workerJob.get()
+         if id
+            "#{id.valueOf().substr(0,5)}…"
+         else
+            ""
+
+   Template.workerPanel.events
+      'click .fail-job': (e, t) ->
+         workerJob.set null
 
    Template.jobTable.helpers
 

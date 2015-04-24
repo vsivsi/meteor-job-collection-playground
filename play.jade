@@ -11,7 +11,8 @@ body
 
 template(name="master")
   +top
-  +yield "content"
+  +yield "jobContent"
+  +yield "workerContent"
 
 template(name="top")
   div(class="container panel")
@@ -27,6 +28,19 @@ template(name="top")
         b an account and sign in to have a private space.
     div.loginTemp
       +loginButtons align="right"
+
+template(name="workerPanel")
+  div(class="container panel panel-default")
+    div.panel-body
+      h4 Local worker
+      if status
+        p Status:
+          span(class="label label-#{type}") #{status}% complete
+        p Job: #{id}
+        button(type="button" class="btn btn-danger btn-sm fail-job") Fail this job
+      else
+        p Status:
+          span(class="label label-#{type}") Idle
 
 template(name="newJobInput")
   div.panel-body
