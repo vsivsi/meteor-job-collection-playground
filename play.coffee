@@ -389,9 +389,9 @@ if Meteor.isServer
                      $lt: current})
                .forEach (j) ->
                   c++
-                  j.fail('Timed out by autofail')
+                  j.fail "Timed out by autofail"
                # console.warn "Failed #{c} stale running jobs"
-               job.done("Failed #{c} stale running jobs")
+               job.done "Failed #{c} stale running jobs"
                cb()
             else
                job.fail "Bad job type in worker"
