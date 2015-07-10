@@ -111,15 +111,24 @@ if Meteor.isClient
          # Reactively populate the table
          this.find({}, { sort: { after: -1 }})
 
-   Template.jobEntry.rendered = () ->
+   handleButtonPopup = () ->
       this.$('.button')
-        .popup
-          inline: true
-          variation: 'inverted'
-          position: 'bottom center'
-          delay:
-            show: 500
-            hide: 0
+         .popup
+            inline: true
+            variation: 'inverted'
+            position: 'bottom center'
+            delay:
+               show: 500
+               hide: 0
+
+   Template.pauseButton.rendered =
+   Template.removeCompletedButton.rendered =
+   Template.resumeButton.rendered =
+   Template.restartButton.rendered =
+   Template.rerunButton.rendered =
+   Template.cancelButton.rendered =
+   Template.removeNoncompletedButton.rendered =
+      handleButtonPopup
 
    Template.jobEntry.events
       'click .cancel-job': (e, t) ->

@@ -138,6 +138,41 @@ template(name="jobTable")
               td(colspan="20" align="center")
                 span.text-info No jobs in collection...
 
+template(name="pauseButton")
+  button.ui.tiny.icon.button.pause-job(data-variation="inverted")
+    i.pause.icon
+  div.ui.popup Pause Job
+
+template(name="removeCompletedButton")
+  button.ui.tiny.green.icon.button.remove-job(data-variation="inverted")
+    i.checkmark.icon
+  div.ui.popup Remove Job
+
+template(name="resumeButton")
+  button.ui.tiny.active.icon.button.resume-job
+    i.play.icon
+  div.ui.popup(data-variation="inverted") Resume Job
+
+template(name="restartButton")
+  button.ui.tiny.teal.icon.button.restart-job
+    i.repeat.icon
+  div.ui.popup(data-variation="inverted") Restart Job
+
+template(name="rerunButton")
+  button.ui.tiny.blue.icon.button.rerun-job
+    i.refresh.icon
+  div.ui.popup(data-variation="inverted") Rerun Job
+
+template(name="cancelButton")
+  button.ui.tiny.yellow.icon.button.cancel-job
+    i.ban.icon
+  div.ui.popup(data-variation="inverted") Cancel Job 
+
+template(name="removeNoncompletedButton")
+  button.ui.tiny.red.icon.button.remove-job
+    i.remove.icon
+  div.ui.popup(data-variation="inverted") Remove Job 
+
 template(name="jobEntry")
   tr
     with doc
@@ -156,31 +191,17 @@ template(name="jobEntry")
           div.ui.medium.label(class="#{statusBG}") #{status}
       td.button-column
         if pausable
-          button.ui.tiny.icon.button.pause-job(data-variation="inverted")
-            i.pause.icon
-          div.ui.popup Pause Job
+          +pauseButton
         if resumable
-          button.ui.tiny.active.icon.button.resume-job
-            i.play.icon
-          div.ui.popup(data-variation="inverted") Resume Job
+          +resumeButton
         if restartable
-          button.ui.tiny.teal.icon.button.restart-job
-            i.repeat.icon
-          div.ui.popup(data-variation="inverted") Restart Job
+          +restartButton
         if rerunable
-          button.ui.tiny.blue.icon.button.rerun-job
-            i.refresh.icon
-          div.ui.popup(data-variation="inverted") Rerun Job
+          +rerunButton
         if cancellable
-          button.ui.tiny.yellow.icon.button.cancel-job
-            i.ban.icon
-          div.ui.popup(data-variation="inverted") Cancel Job 
+          +cancelButton
         if removable
           if rerunable
-            button.ui.tiny.green.icon.button.remove-job
-              i.checkmark.icon
-            div.ui.popup(data-variation="inverted") Remove Job 
+            +removeCompletedButton
           else
-            button.ui.tiny.red.icon.button.remove-job(data-content="Remove Job"  data-variation="inverted")
-              i.remove.icon
-            div.ui.popup(data-variation="inverted") Remove Job 
+            +removeNoncompletedButton
