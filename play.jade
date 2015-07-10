@@ -28,7 +28,7 @@ template(name="top")
 
 template(name="workerPanel")
   div.ui.segment
-    h4.ui.header Local worker
+    h3.ui.header Local worker
     if status
       p Status: 
         div.ui.small.teal.label #{status}% complete
@@ -40,7 +40,7 @@ template(name="workerPanel")
 
 template(name="newJobInput")
   div.ui.raised.segment
-    h4.ui.header Create a new repeating job
+    h3.ui.header Create a new repeating job
       | using Later.js
       a(target="_blank" href="https://bunkat.github.io/later/parsers.html#text")
         | text parser input,
@@ -77,7 +77,7 @@ template(name="newJobInput")
 
 template(name="jobControls")
   div.ui.raised.segment
-    h4.ui.header Collection Controls
+    h3.ui.header Collection Controls
     button.ui.green.labeled.icon.button.clear-completed
       i.checkmark.icon
       | Clear Completed
@@ -99,7 +99,7 @@ template(name="jobTable")
     +newJobInput
     +jobControls
     div.ui.raised.segment
-      h4.ui.header Job Collection
+      h3.ui.header Job Collection
       span.text-muted.small
         u Fine print:
         | Jobs only run when a client is connected. This is because all "work" in this demo is
