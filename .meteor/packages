@@ -6,13 +6,15 @@
 
 meteor-platform
 stylus
-twbs:bootstrap
 vsivsi:job-collection
 numeral:numeral
 momentjs:moment
-accounts-ui
 accounts-password
 coffeescript
 mquandalle:jade
 iron:router
 reactive-var
+accounts-ui-unstyled
+semantic:ui
+flemay:less-autoprefixer
+accounts-ui

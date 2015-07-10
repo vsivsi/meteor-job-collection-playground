@@ -285,9 +285,11 @@ if Meteor.isClient
 
       'click .pause-queue': (e, t) ->
          if $(e.target).hasClass 'active'
+            $(e.target).removeClass 'active'
             ids = t.data.find({ status: 'paused' },{ fields: { _id: 1 }}).map (d) -> d._id
             t.data.resumeJobs(ids) if ids.length > 0
          else
+            $(e.target).addClass 'active'
             ids = t.data.find({ status: { $in: Job.jobStatusPausable }}, { fields: { _id: 1 }}).map (d) -> d._id
             t.data.pauseJobs(ids) if ids.length > 0
 

@@ -10,41 +10,37 @@ head
 body
 
 template(name="master")
-  +top
-  +yield "jobContent"
-  +yield "workerContent"
+  div.ui.container
+     +top
+     +yield "jobContent"
+     +yield "workerContent"
 
 template(name="top")
-  div(class="container panel")
-    h3 job-collection Playground App
-    if currentUser
-      span(class="pull-right")
-        b UserId:
-        span(class="text-info") #{userId}
-    else
-      span(class="pull-right")
-        b You are currently in the public playground, create
-        br
-        b an account and sign in to have a private space.
+  div.ui.segment
+    h2.ui.header job-collection Playground App
+    unless currentUser
+      div.ui.info.message
+        p
+          | You are currently in the public playground, create
+          | an account and sign in to have a private space.
     div.loginTemp
       +loginButtons align="right"
 
 template(name="workerPanel")
-  div(class="container panel panel-default")
-    div.panel-body
-      h4 Local worker
-      if status
-        p Status:
-          span(class="label label-#{type}") #{status}% complete
-        p Job: #{id}
-        button(type="button" class="btn btn-danger btn-sm fail-job") Fail this job
-      else
-        p Status:
-          span(class="label label-#{type}") Idle
+  div.ui.segment
+    h4.ui.header Local worker
+    if status
+      p Status: 
+        div.ui.small.teal.label #{status}% complete
+      p Job: #{id}
+      button.negative.ui.button Fail this job
+    else
+      p Status:
+        div.ui.small.grey.label Idle
 
 template(name="newJobInput")
-  div.panel-body
-    h4 Create a new repeating job
+  div.ui.raised.segment
+    h4.ui.header Create a new repeating job
       | using Later.js
       a(target="_blank" href="https://bunkat.github.io/later/parsers.html#text")
         | text parser input,
@@ -53,20 +49,22 @@ template(name="newJobInput")
         | CRON expression
       |:
     p
-    label(for="inputLater")
-      | When should it run?
-      span.text-muted (all times are UTC):
-    div(class="input-group #{inputParseState}")
-      input(class="form-control" id="inputLater" placeholder="e.g. 'every 5 minutes' or '*/5 * * * *'")
-      span(class="input-group-addon" id="newJob")
-        if inputReady
-          span(class="glyphicon glyphicon-time")
-          |  Create new job
-        else
-          span(class="glyphicon glyphicon-remove-circle")
+    form.ui.form
+      div.field
+        label When should it run? 
+          span.text-muted (all times are UTC):
+        div.ui.fluid.input
+          input(id="inputLater" placeholder="e.g. 'every 5 minutes' or '*/5 * * * *'")
+          if inputReady
+            button#newJob.ui.green.right.labeled.icon.button
+              i.wait.icon
+              | Create new job
+          else
+            button.ui.right.icon.button
+              i.remove.circle.icon
     p
     if inputReady
-      table(class="table table-bordered")
+      table.ui.celled.table
         thead
           tr
             th
@@ -78,30 +76,30 @@ template(name="newJobInput")
                 | #{.}
 
 template(name="jobControls")
-  div.panel-body
-    h4 Collection Controls
-    button(type="button" class="btn btn-success clear-completed")
-      span(class="glyphicon glyphicon-ok")
+  div.ui.raised.segment
+    h4.ui.header Collection Controls
+    button.ui.green.labeled.icon.button.clear-completed
+      i.checkmark.icon
       | Clear Completed
-    button(type="button" class="btn btn-default pause-queue" data-toggle="button")
-      span(class="glyphicon glyphicon-pause")
+    button.ui.labeled.icon.button.pause-queue
+      i.pause.icon
       | Pause all
-    button(type="button" class="btn btn-info restart-queue")
-      span(class="glyphicon glyphicon-repeat")
+    button.ui.teal.labeled.icon.button.restart-queue
+      i.repeat.icon
       | Restart all
-    button(type="button" class="btn btn-warning cancel-queue")
-      span(class="glyphicon glyphicon-ban-circle")
+    button.ui.yellow.labeled.icon.button.cancel-queue
+      i.ban.icon
       | Cancel all
-    button(type="button" class="btn btn-danger remove-queue")
-      span(class="glyphicon glyphicon-remove")
+    button.ui.red.labeled.icon.button.remove-queue
+      i.remove.icon
       | Remove all
 
 template(name="jobTable")
-  div(class="container panel panel-default")
+  div.ui.segment
     +newJobInput
     +jobControls
-    div.panel-body
-      h4 Job Collection
+    div.ui.raised.segment
+      h4.ui.header Job Collection
       span.text-muted.small
         u Fine print:
         | Jobs only run when a client is connected. This is because all "work" in this demo is
@@ -114,7 +112,7 @@ template(name="jobTable")
         | update "live" with their actions. In this demo when you create a new repeating job, all
         | preexisting running or waiting jobs of that type are automatically cancelled by the server.
       p
-      table(class="table table-bordered table-striped table-responsive")
+      table.ui.celled.striped.table
         thead
           tr
             th Type
