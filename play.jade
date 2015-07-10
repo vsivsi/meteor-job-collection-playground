@@ -76,31 +76,36 @@ template(name="newJobInput")
                 | #{.}
 
 template(name="jobControls")
-  div.ui.raised.segment
-    h3.ui.header Collection Controls
-    button.ui.green.labeled.icon.button.clear-completed
-      i.checkmark.icon
-      | Clear Completed
-    button.ui.labeled.icon.button.pause-queue
-      i.pause.icon
-      | Pause all
-    button.ui.teal.labeled.icon.button.restart-queue
-      i.repeat.icon
-      | Restart all
-    button.ui.yellow.labeled.icon.button.cancel-queue
-      i.ban.icon
-      | Cancel all
-    button.ui.red.labeled.icon.button.remove-queue
-      i.remove.icon
-      | Remove all
+  //- div.ui.segment
+  div.ui.equal.width.stackable.grid
+    //- div.ui.five.buttons
+    div.column
+      button.ui.green.fluid.labeled.icon.button.clear-completed
+        i.checkmark.icon
+        | Clear Completed
+    div.column
+      button.ui.fluid.labeled.icon.button.pause-queue
+        i.pause.icon
+        | Pause all
+    div.column
+      button.ui.teal.fluid.labeled.icon.button.restart-queue
+        i.repeat.icon
+        | Restart all
+    div.column
+      button.ui.yellow.fluid.labeled.icon.button.cancel-queue
+        i.ban.icon
+        | Cancel all
+    div.column
+      button.ui.red.fluid.labeled.icon.button.remove-queue
+        i.remove.icon
+        | Remove all
 
 template(name="jobTable")
   div.ui.segment
     +newJobInput
-    +jobControls
     div.ui.raised.segment
       h3.ui.header Job Collection
-      span.text-muted.small
+      div.ui.basic.segment
         u Fine print:
         | Jobs only run when a client is connected. This is because all "work" in this demo is
         | performed in the client code. If you close or reload your browser page while a job is
@@ -111,7 +116,9 @@ template(name="jobTable")
         | then the job collection you see below is being shared with other public users and will
         | update "live" with their actions. In this demo when you create a new repeating job, all
         | preexisting running or waiting jobs of that type are automatically cancelled by the server.
-      p
+
+      +jobControls
+
       table.ui.celled.striped.table
         thead
           tr
@@ -142,72 +149,38 @@ template(name="jobEntry")
       td #{repeated} / #{numRepeats}
       td
         if running
-          div.progress
-            div(class="progress-bar progress-bar-info"
-                role="progressbar"
-                min-width="60px"
-                aria-valuenow="#{progress.percent}"
-                aria-valuemin="0"
-                aria-valuemax="100"
-                style="width: {{progress.percent}}%;")
-              span(class="text-primary text-center") #{progress.percent}%
+          div.ui.tiny.indicating.progress(data-percent="#{progress.percent}")
+            div.bar(style="transition-duration: 100ms; width: #{progress.percent}%;")
+            div.label Running #{progress.percent}%
         else
-          span(class="label label-#{statusBG}") #{status}
+          div.ui.medium.label(class="#{statusBG}") #{status}
       td.button-column
         if pausable
-          button(type="button"
-                 class="btn pause-job btn-default btn-xs"
-                 aria-hidden="true"
-                 data-toggle="tooltip"
-                 data-placement="bottom"
-                 title="Pause Job")
-            span(class="glyphicon glyphicon-pause")
+          button.ui.tiny.icon.button.pause-job(data-variation="inverted")
+            i.pause.icon
+          div.ui.popup Pause Job
         if resumable
-          button(type="button"
-                 class="btn resume-job btn-default btn-xs"
-                 aria-hidden="true"
-                 data-toggle="tooltip"
-                 data-placement="bottom"
-                 title="Resume Job")
-            span(class="glyphicon glyphicon-play")
+          button.ui.tiny.active.icon.button.resume-job
+            i.play.icon
+          div.ui.popup(data-variation="inverted") Resume Job
         if restartable
-          button(type="button"
-                 class="btn restart-job btn-info btn-xs"
-                 aria-hidden="true"
-                 data-toggle="tooltip"
-                 data-placement="bottom"
-                 title="Restart Job")
-            span(class="glyphicon glyphicon-repeat")
+          button.ui.tiny.teal.icon.button.restart-job
+            i.repeat.icon
+          div.ui.popup(data-variation="inverted") Restart Job
         if rerunable
-          button(type="button"
-                 class="btn rerun-job btn-info btn-xs"
-                 aria-hidden="true"
-                 data-toggle="tooltip"
-                 data-placement="bottom"
-                 title="Rerun Job")
-            span(class="glyphicon glyphicon-refresh")
+          button.ui.tiny.blue.icon.button.rerun-job
+            i.refresh.icon
+          div.ui.popup(data-variation="inverted") Rerun Job
         if cancellable
-          button(type="button"
-                 class="btn cancel-job btn-warning btn-xs"
-                 aria-hidden="true"
-                 data-toggle="tooltip"
-                 data-placement="bottom"
-                 title="Cancel Job")
-            span(class="glyphicon glyphicon-ban-circle")
+          button.ui.tiny.yellow.icon.button.cancel-job
+            i.ban.icon
+          div.ui.popup(data-variation="inverted") Cancel Job 
         if removable
           if rerunable
-            button(type="button"
-                   class="btn remove-job btn-success btn-xs"
-                   aria-hidden="true"
-                   data-toggle="tooltip"
-                   data-placement="bottom"
-                   title="Remove Job")
-              span(class="glyphicon glyphicon-ok")
+            button.ui.tiny.green.icon.button.remove-job
+              i.checkmark.icon
+            div.ui.popup(data-variation="inverted") Remove Job 
           else
-            button(type="button"
-                   class="btn remove-job btn-danger btn-xs"
-                   aria-hidden="true"
-                   data-toggle="tooltip"
-                   data-placement="bottom"
-                   title="Remove Job")
-              span(class="glyphicon glyphicon-remove")
+            button.ui.tiny.red.icon.button.remove-job(data-content="Remove Job"  data-variation="inverted")
+              i.remove.icon
+            div.ui.popup(data-variation="inverted") Remove Job 

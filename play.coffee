@@ -112,11 +112,14 @@ if Meteor.isClient
          this.find({}, { sort: { after: -1 }})
 
    Template.jobEntry.rendered = () ->
-      this.$('.button-column').tooltip
-         selector: 'button[data-toggle=tooltip]'
-         delay:
+      this.$('.button')
+        .popup
+          inline: true
+          variation: 'inverted'
+          position: 'bottom center'
+          delay:
             show: 500
-            hide: 100
+            hide: 0
 
    Template.jobEntry.events
       'click .cancel-job': (e, t) ->
@@ -151,13 +154,13 @@ if Meteor.isClient
 
       statusBG: () ->
          {
-            waiting: 'primary'
-            ready: 'info'
-            paused: 'default'
-            running: 'default'
-            cancelled: 'warning'
-            failed: 'danger'
-            completed: 'success'
+           waiting: 'grey'
+           ready: 'blue'
+           paused: 'black'
+           running: 'default'
+           cancelled: 'yellow'
+           failed: 'red'
+           completed: 'green'
          }[this.status]
 
       numRepeats: () -> isInfinity this.repeats
@@ -180,13 +183,6 @@ if Meteor.isClient
             "text-success"
 
       running: () ->
-         if Template.instance().view.isRendered
-            # This code destroys Bootstrap tooltips on existing buttons that may be
-            # about to disappear. This is done here because by the time the template
-            # autorun function runs, the button may already be out of the DOM, but
-            # a "ghost" tooltip for that button can remain visible.
-            Template.instance().$("button[data-toggle=tooltip]").tooltip('destroy')
-
          this.status is 'running'
 
       cancellable: () ->
