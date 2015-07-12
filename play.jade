@@ -49,19 +49,23 @@ template(name="newJobInput")
         | CRON expression
       |:
     p
-    form.ui.form
-      div.field
-        label When should it run? 
-          span.text-muted (all times are UTC):
-        div.ui.fluid.input
-          input(id="inputLater" placeholder="e.g. 'every 5 minutes' or '*/5 * * * *'")
-          if inputReady
-            button#newJob.ui.green.right.labeled.icon.button
-              i.wait.icon
-              | Create new job
-          else
-            button.ui.right.icon.button
-              i.remove.circle.icon
+    div.field
+      label When should it run? 
+        span.text-muted (all absolute times are UTC):
+      div.ui.huge.fluid.action.input(class="#{inputError}")
+        input(id="inputLater" placeholder="e.g. 'every 5 minutes' or '*/5 * * * *'" type="text")
+        if inputReady
+          button#newJob.ui.green.right.labeled.icon.button
+            i.wait.icon
+            | Create new job
+        else if inputError
+          button.ui.disabled.red.right.labeled.icon.button
+            i.wait.icon
+            | Create new job
+        else
+          button.ui.disabled.right.labeled.icon.button
+            i.wait.icon
+            | Create new job
     p
     if inputReady
       table.ui.celled.table

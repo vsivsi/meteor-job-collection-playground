@@ -217,6 +217,12 @@ if Meteor.isClient
       inputReady: () ->
          parseState.get() is "has-success"
 
+      inputError: () ->
+        if parseState.get() is "has-error"
+          "error"
+        else
+          ""
+
       nextTimes: () ->
          reactiveDate.get()
          for t in parseSched.get().next(3)
@@ -231,7 +237,29 @@ if Meteor.isClient
       else
          return null
 
+   newJobSubmit = (e, t) ->
+      val = t.find("#inputLater").value
+      cronFlag = validateCRON val
+      if cronFlag?
+         s = later.parse.cron val, cronFlag
+         s.error = -1 if s?
+      else
+         s = later.parse.text(val)
+      if s.error is -1
+         job = new Job(myJobs, myType, { owner: Meteor.userId() })
+            .retry({ retries: 3, wait: 30000, backoff: 'exponential'})
+            .repeat({ schedule: s })
+            .save({cancelRepeats: true})
+      else
+         parseState.set "has-error"
+
    Template.newJobInput.events
+
+      'click #newJob': newJobSubmit
+
+      'keyup #inputLater': (e, t) ->
+        if e.keyCode is 13
+           newJobSubmit e, t
 
       'input #inputLater': (e, t) ->
          val = e.target.value.trim()
@@ -263,22 +291,6 @@ if Meteor.isClient
                   parseState.set "has-warning"
                   parseSched.set []
 
-      'click #newJob': (e, t) ->
-         val = t.find("#inputLater").value
-         cronFlag = validateCRON val
-         if cronFlag?
-            s = later.parse.cron val, cronFlag
-            s.error = -1 if s?
-         else
-            s = later.parse.text(val)
-         if s.error is -1
-            job = new Job(myJobs, myType, { owner: Meteor.userId() })
-               .retry({ retries: 3, wait: 30000, backoff: 'exponential'})
-               .repeat({ schedule: s })
-               .save({cancelRepeats: true})
-         else
-            parseState.set "has-error"
-
    Template.jobControls.events
 
       'click .pause-queue': (e, t) ->
@@ -301,7 +313,6 @@ if Meteor.isClient
 
       'click .rerun-queue': (e, t) ->
          t.data.find({ status: 'completed' }).forEach (d) ->
-           console.log "Trying to rerun: ", d
            d.rerun { wait: 15000 }
 
       'click .remove-queue': (e, t) ->
