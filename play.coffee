@@ -120,14 +120,12 @@ if Meteor.isClient
                show: 500
                hide: 0
 
-   Template.pauseButton.rendered =
-   Template.removeCompletedButton.rendered =
-   Template.resumeButton.rendered =
-   Template.restartButton.rendered =
-   Template.rerunButton.rendered =
-   Template.cancelButton.rendered =
-   Template.removeNoncompletedButton.rendered =
-      handleButtonPopup
+   Template.pauseButton.onRendered handleButtonPopup
+   Template.removeButton.onRendered handleButtonPopup
+   Template.resumeButton.onRendered handleButtonPopup
+   Template.restartButton.onRendered handleButtonPopup
+   Template.rerunButton.onRendered handleButtonPopup
+   Template.cancelButton.onRendered handleButtonPopup
 
    Template.jobEntry.events
       'click .cancel-job': (e, t) ->
@@ -283,10 +281,6 @@ if Meteor.isClient
 
    Template.jobControls.events
 
-      'click .clear-completed': (e, t) ->
-         ids = t.data.find({ status: 'completed' },{ fields: { _id: 1 }}).map (d) -> d._id
-         t.data.removeJobs(ids) if ids.length > 0
-
       'click .pause-queue': (e, t) ->
          if $(e.target).hasClass 'active'
             $(e.target).removeClass 'active'
@@ -304,6 +298,11 @@ if Meteor.isClient
       'click .restart-queue': (e, t) ->
          ids = t.data.find({ status: { $in: Job.jobStatusRestartable }}, { fields: { _id: 1 }}).map (d) -> d._id
          t.data.restartJobs(ids) if ids.length > 0
+
+      'click .rerun-queue': (e, t) ->
+         t.data.find({ status: 'completed' }).forEach (d) ->
+           console.log "Trying to rerun: ", d
+           d.rerun { wait: 15000 }
 
       'click .remove-queue': (e, t) ->
          ids = t.data.find({ status: { $in: Job.jobStatusRemovable }}, { fields: { _id: 1 }}).map (d) -> d._id

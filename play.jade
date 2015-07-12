@@ -76,25 +76,23 @@ template(name="newJobInput")
                 | #{.}
 
 template(name="jobControls")
-  //- div.ui.segment
   div.ui.equal.width.stackable.grid
-    //- div.ui.five.buttons
-    div.column
-      button.ui.green.fluid.labeled.icon.button.clear-completed
-        i.checkmark.icon
-        | Clear Completed
     div.column
       button.ui.fluid.labeled.icon.button.pause-queue
         i.pause.icon
         | Pause all
     div.column
+      button.ui.yellow.fluid.labeled.icon.button.cancel-queue
+        i.ban.icon
+        | Cancel all
+    div.column
       button.ui.teal.fluid.labeled.icon.button.restart-queue
         i.repeat.icon
         | Restart all
     div.column
-      button.ui.yellow.fluid.labeled.icon.button.cancel-queue
-        i.ban.icon
-        | Cancel all
+      button.ui.blue.fluid.labeled.icon.button.rerun-queue
+        i.refresh.icon
+        | Rerun all
     div.column
       button.ui.red.fluid.labeled.icon.button.remove-queue
         i.remove.icon
@@ -143,11 +141,6 @@ template(name="pauseButton")
     i.pause.icon
   div.ui.inverted.popup Pause Job
 
-template(name="removeCompletedButton")
-  button.ui.tiny.green.icon.button.remove-job
-    i.checkmark.icon
-  div.ui.inverted.popup Remove Job
-
 template(name="resumeButton")
   button.ui.tiny.active.icon.button.resume-job
     i.play.icon
@@ -168,7 +161,7 @@ template(name="cancelButton")
     i.ban.icon
   div.ui.inverted.popup Cancel Job 
 
-template(name="removeNoncompletedButton")
+template(name="removeButton")
   button.ui.tiny.red.icon.button.remove-job
     i.remove.icon
   div.ui.inverted.popup Remove Job 
@@ -201,7 +194,4 @@ template(name="jobEntry")
         if cancellable
           +cancelButton
         if removable
-          if rerunable
-            +removeCompletedButton
-          else
-            +removeNoncompletedButton
+          +removeButton
