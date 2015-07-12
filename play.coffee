@@ -115,6 +115,7 @@ if Meteor.isClient
       this.$('.button')
          .popup
             inline: true
+            variation: 'inverted'
             position: 'bottom center'
             delay:
                show: 500
