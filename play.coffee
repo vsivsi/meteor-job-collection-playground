@@ -15,20 +15,20 @@ myJobs = new JobCollection 'queue',
 
 later = myJobs.later
 
-Router.configure
-   layoutTemplate: 'master'
-
-Router.route '/', () ->
-
-   this.render 'jobTable',
-      to: 'jobContent'
-      data: myJobs
-
-   this.render 'workerPanel',
-      to: 'workerContent'
-      data: {}
-
 if Meteor.isClient
+
+   reactiveWindowWidth = new ReactiveVar(0)
+
+   Meteor.startup () ->
+      timeout = null
+      reactiveWindowWidth.set $(window).width()
+      $(window).resize () ->
+         Meteor.clearTimeout(timeout) if timeout
+         timeout = Meteor.setTimeout () ->
+               timeout = null
+               console.log $(window).width()
+               reactiveWindowWidth.set $(window).width()
+            , 100
 
    parseState = new ReactiveVar("")
    parseSched = new ReactiveVar([])
@@ -75,9 +75,13 @@ if Meteor.isClient
       .observe
          added: () -> q.trigger()
 
+   Template.registerHelper "jobCollection", () -> myJobs
+
+   Template.registerHelper "wideScreen", () -> reactiveWindowWidth.get() > 1500
+
    Template.top.helpers
-      userId: () ->
-         Meteor.userId()
+     userId: () ->
+       Meteor.userId()
 
    Template.workerPanel.helpers
       status: () ->
@@ -106,7 +110,6 @@ if Meteor.isClient
          workerJob.set null
 
    Template.jobTable.helpers
-
       jobEntries: () ->
          # Reactively populate the table
          this.find({}, { sort: { after: -1 }})

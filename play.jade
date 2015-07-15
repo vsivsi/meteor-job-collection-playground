@@ -8,12 +8,10 @@ head
   title meteor-job-collection-playground
 
 body
-
-template(name="master")
   div.ui.container
-     +top
-     +yield "jobContent"
-     +yield "workerContent"
+    +top
+    +newJobInput
+    +jobTable jobCollection
 
 template(name="top")
   div.ui.segment
@@ -27,19 +25,21 @@ template(name="top")
       +loginButtons align="right"
 
 template(name="workerPanel")
-  div.ui.segment
+  div.ui.segment#workerPanel
     h3.ui.header Local worker
     if status
-      p Status: 
+      p Status:
         div.ui.small.teal.label #{status}% complete
       p Job: #{id}
-      button.negative.ui.button Fail this job
+      button.negative.ui.right.labeled.icon.button.fail-job
+        i.bomb.icon
+        | Fail this job
     else
       p Status:
         div.ui.small.grey.label Idle
 
 template(name="newJobInput")
-  div.ui.raised.segment
+  div.ui.segment
     h3.ui.header Create a new repeating job
       | using Later.js
       a(target="_blank" href="https://bunkat.github.io/later/parsers.html#text")
@@ -50,7 +50,7 @@ template(name="newJobInput")
       |:
     p
     div.field
-      label When should it run? 
+      label When should it run?
         span.text-muted (all absolute times are UTC):
       div.ui.large.fluid.action.input(class="#{inputError}")
         input(id="inputLater" placeholder="e.g. 'every 5 minutes' or '*/5 * * * *'" type="text")
@@ -103,8 +103,7 @@ template(name="jobControls")
         | Remove all
 
 template(name="jobTable")
-  div.ui.segment
-    +newJobInput
+  div.ui.segment#jobTable
     div.ui.raised.segment
       h3.ui.header Job Collection
       div.ui.basic.segment
@@ -139,6 +138,11 @@ template(name="jobTable")
             tr
               td(colspan="20" align="center")
                 span.text-info No jobs in collection...
+    if wideScreen
+      div.ui.right.very.close.rail
+        +workerPanel
+    else
+      +workerPanel
 
 template(name="pauseButton")
   button.ui.tiny.icon.button.pause-job
@@ -163,12 +167,12 @@ template(name="rerunButton")
 template(name="cancelButton")
   button.ui.tiny.yellow.icon.button.cancel-job
     i.ban.icon
-  div.ui.inverted.popup Cancel Job 
+  div.ui.inverted.popup Cancel Job
 
 template(name="removeButton")
   button.ui.tiny.red.icon.button.remove-job
     i.remove.icon
-  div.ui.inverted.popup Remove Job 
+  div.ui.inverted.popup Remove Job
 
 template(name="jobEntry")
   tr

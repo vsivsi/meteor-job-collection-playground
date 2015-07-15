@@ -12,7 +12,6 @@ momentjs:moment
 accounts-password
 coffeescript
 mquandalle:jade
-iron:router
 reactive-var
 accounts-ui-unstyled
 semantic:ui
