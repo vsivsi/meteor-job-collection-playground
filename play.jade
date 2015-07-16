@@ -25,17 +25,18 @@ template(name="top")
       +loginButtons align="right"
 
 template(name="workerPanel")
-  div.ui.segment#workerPanel
+  div.ui.raised.segment#workerPanel
     h3.ui.header Local worker
-    if status
-      p Status:
-        div.ui.small.teal.label #{status}% complete
-      p Job: #{id}
-      button.negative.ui.right.labeled.icon.button.fail-job
-        i.bomb.icon
-        | Fail this job
-    else
-      p Status:
+    p Status:
+      if running
+        p Job: {{truncateId _id}} Run: {{truncateId runId}}
+        div.ui.tiny.indicating.progress(data-percent="#{progress.percent}")
+          div.bar(style="transition-duration: 100ms; width: #{progress.percent}%;")
+          div.label Running #{progress.percent}%
+        button.negative.ui.right.labeled.icon.button.fail-job
+          i.bomb.icon
+          | Abort
+      else
         div.ui.small.grey.label Idle
 
 template(name="newJobInput")
@@ -109,16 +110,14 @@ template(name="jobTable")
       div.ui.basic.segment
         u Fine print:
         | Jobs only run when a client is connected. This is because all "work" in this demo is
-        | performed in the client code. If you close or reload your browser page while a job is
-        | running (and your client was the one working on the job) then that job will not complete,
+        | performed in the client code. If you close or reload this page while a job is
+        | running in your local worker then that job will not complete,
         | and after a few minutes a "reaper" job on the server will notice and "auto-fail" the
         | job so it can be retried later. Completed and cancelled jobs are also automatically removed
         | by a "cleanup" job on the server after a short period of time. If you are not signed in,
         | then the job collection you see below is being shared with other public users and will
         | update "live" with their actions. In this demo when you create a new repeating job, all
         | preexisting running or waiting jobs of that type are automatically cancelled by the server.
-
-      +jobControls
 
       table.ui.celled.striped.table
         thead
@@ -138,11 +137,16 @@ template(name="jobTable")
             tr
               td(colspan="20" align="center")
                 span.text-info No jobs in collection...
+
+    +jobControls
+
     if wideScreen
       div.ui.right.very.close.rail
-        +workerPanel
+        +workerPanel localWorker
+        +logEntries
     else
-      +workerPanel
+      +workerPanel localWorker
+      +logEntries
 
 template(name="pauseButton")
   button.ui.tiny.icon.button.pause-job
@@ -178,7 +182,7 @@ template(name="jobEntry")
   tr
     with doc
       td #{type}
-      td #{jobId}
+      td {{truncateId _id}}
       td(class="#{futurePast}") #{runAt}
       td #{lastUpdated}
       td #{retried} / #{numRetries}
@@ -203,3 +207,20 @@ template(name="jobEntry")
           +cancelButton
         if removable
           +removeButton
+
+template(name="logEntries")
+  div.ui.raised.segment#logEntries
+    h3 Recently Logged Events
+    div.ui.feed
+      each recentEvents
+        div.event(class="#{level}")
+          div.content
+            div.summary
+              div.user #{type} #{jobId}
+              if runId
+                div.meta Run: #{runId}
+              div.date #{relativeTime}
+            div.extra.text
+              div.ui.message(class="#{level}")
+                i.big.icon(class="#{levelIcon} #{level}")
+                | #{message}

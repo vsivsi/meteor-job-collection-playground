@@ -30,12 +30,10 @@ if Meteor.isClient
                reactiveWindowWidth.set $(window).width()
             , 100
 
-   parseState = new ReactiveVar("")
-   parseSched = new ReactiveVar([])
-   reactiveDate = new ReactiveVar(new Date())
-
-   workerState = new ReactiveVar undefined
-   workerJob = new ReactiveVar null
+   parseState = new ReactiveVar ""
+   parseSched = new ReactiveVar []
+   reactiveDate = new ReactiveVar new Date()
+   localWorker = new ReactiveVar null
 
    Meteor.setInterval((() -> reactiveDate.set new Date()), 5000)
 
@@ -49,27 +47,27 @@ if Meteor.isClient
       Meteor.subscribe 'allJobs', userId
       q?.shutdown { level: 'hard' }
       q = myJobs.processJobs myType, { pollInterval: 100000000 }, (job, cb) ->
-         workerJob.set job.doc._id
-         workerState.set 0
+         done = 0
+         localWorker.set job.doc
          int = Meteor.setInterval (() ->
-            unless workerJob.get()
+            unless localWorker.get()
                Meteor.clearInterval int
-               workerState.set undefined
-               job.fail('User failed job', () -> cb())
+               job.fail('User aborted job', () -> cb())
             else
-               workerState.set(workerState.get() + 1)
-               if workerState.get() is 20
-                  workerState.set undefined
-                  workerJob.set null
+               done++
+               if done is 20
                   Meteor.clearInterval int
+                  localWorker.set null
                   job.done()
                   cb()
                else
-                  job.progress workerState.get(), 20, (err, res) ->
+                  job.progress done, 20, (err, res) ->
                      if err or not res
                         Meteor.clearInterval int
-                        workerJob.set null
+                        localWorker.set null
                         job.fail('Progress update failed', () -> cb())
+                     else
+                        localWorker.set job.doc
          ), 500
       obs = myJobs.find({ type: myType, status: 'ready' })
       .observe
@@ -77,37 +75,30 @@ if Meteor.isClient
 
    Template.registerHelper "jobCollection", () -> myJobs
 
-   Template.registerHelper "wideScreen", () -> reactiveWindowWidth.get() > 1500
+   Template.registerHelper "localWorker", () -> localWorker.get()
+
+   Template.registerHelper "wideScreen", () -> reactiveWindowWidth.get() > 1745
+
+   truncateId = (id, length = 6) ->
+      if id
+         if typeof id is 'object'
+            id = "#{id.valueOf()}"
+         "#{id.substr(0,6)}…"
+      else
+         ""
+
+   Template.registerHelper "truncateId", truncateId
 
    Template.top.helpers
      userId: () ->
        Meteor.userId()
 
    Template.workerPanel.helpers
-      status: () ->
-         state = workerState.get()
-         unless state?
-            null
-         else
-            return 100*state/20
-
-      type: () ->
-         state = workerState.get()
-         unless state?
-            return "default"
-         else
-            return "info"
-
-      id: () ->
-         id = workerJob.get()
-         if id
-            "#{id.valueOf().substr(0,5)}…"
-         else
-            ""
+      running: () -> localWorker.get()?.status is 'running'
 
    Template.workerPanel.events
       'click .fail-job': (e, t) ->
-         workerJob.set null
+         localWorker.set null
 
    Template.jobTable.helpers
       jobEntries: () ->
@@ -157,9 +148,6 @@ if Meteor.isClient
          val
 
    Template.jobEntry.helpers
-
-      jobId: () ->
-         "#{this._id.valueOf().substr(0,5)}…"
 
       statusBG: () ->
          {
@@ -231,6 +219,30 @@ if Meteor.isClient
          for t in parseSched.get().next(3)
             "#{moment(t).calendar()} (local time), #{moment(t).fromNow()}. [#{moment(t).toISOString()}]"
 
+   Template.logEntries.helpers
+      recentEvents: (numEvents = 5) ->
+         output = []
+         this.find({}, { fields: { log: 1, type: 1 }, transform: null, limit: numEvents, sort: { updated: -1 }})
+            .forEach (doc) ->
+               for event in doc.log
+                  event.type = doc.type
+                  event.jobId = truncateId doc._id
+                  event.runId = truncateId event.runId
+                  event.relativeTime = moment(event.time).fromNow()
+                  event.level = "error" if event.level is 'danger'
+                  output.push event
+         output.sort (a, b) ->
+            b.time - a.time
+         output.slice 0, numEvents
+
+      levelIcon: () ->
+         switch this.level
+            when 'info' then 'info'
+            when 'success' then 'trophy'
+            when 'warning' then 'warning sign'
+            when 'error' then 'bomb'
+            else 'bug'
+
    validateCRON = (val) ->
       re = /^(?:\*|\d{1,2})(?:(?:(?:[\/-]\d{1,2})?)|(?:,\d{1,2})+)\ *(?:\ (?:\*|\d{1,2})(?:(?:(?:[\/-]\d{1,2})?)|(?:,\d{1,2})+)\ *)*$/
       return null unless val.match re
@@ -250,7 +262,7 @@ if Meteor.isClient
          s = later.parse.text(val)
       if s.error is -1
          job = new Job(myJobs, myType, { owner: Meteor.userId() })
-            .retry({ retries: 3, wait: 30000, backoff: 'exponential'})
+            .retry({ retries: 2, wait: 30000, backoff: 'exponential'})
             .repeat({ schedule: s })
             .save({cancelRepeats: true})
       else
