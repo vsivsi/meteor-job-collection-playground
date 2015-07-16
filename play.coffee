@@ -79,6 +79,12 @@ if Meteor.isClient
 
    Template.registerHelper "wideScreen", () -> reactiveWindowWidth.get() > 1745
 
+   Template.registerHelper "relativeTime", (time) ->
+      now = reactiveDate.get()
+      moment(time).from(now)
+
+   Template.registerHelper "equals", (a, b) -> a is b
+
    truncateId = (id, length = 6) ->
       if id
          if typeof id is 'object'
@@ -92,9 +98,6 @@ if Meteor.isClient
    Template.top.helpers
      userId: () ->
        Meteor.userId()
-
-   Template.workerPanel.helpers
-      running: () -> localWorker.get()?.status is 'running'
 
    Template.workerPanel.events
       'click .fail-job': (e, t) ->
@@ -164,23 +167,12 @@ if Meteor.isClient
 
       numRetries: () -> isInfinity this.retries
 
-      runAt: () ->
-         reactiveDate.get()
-         moment(this.after).fromNow()
-
-      lastUpdated: () ->
-         reactiveDate.get()
-         moment(this.updated).fromNow()
-
       futurePast: () ->
-         reactiveDate.get()
-         if this.after > new Date()
+         now = reactiveDate.get()
+         if this.after > now
             "text-danger"
          else
             "text-success"
-
-      running: () ->
-         this.status is 'running'
 
       cancellable: () ->
          this.status in Job.jobStatusCancellable
@@ -191,14 +183,8 @@ if Meteor.isClient
       restartable: () ->
          this.status in Job.jobStatusRestartable
 
-      rerunable: () ->
-         this.status is 'completed'
-
       pausable: () ->
          this.status in Job.jobStatusPausable
-
-      resumable: () ->
-         this.status is 'paused'
 
    Template.newJobInput.helpers
 
@@ -228,7 +214,6 @@ if Meteor.isClient
                   event.type = doc.type
                   event.jobId = truncateId doc._id
                   event.runId = truncateId event.runId
-                  event.relativeTime = moment(event.time).fromNow()
                   event.level = "error" if event.level is 'danger'
                   output.push event
          output.sort (a, b) ->

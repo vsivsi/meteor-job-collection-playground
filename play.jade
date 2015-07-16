@@ -28,7 +28,7 @@ template(name="workerPanel")
   div.ui.raised.segment#workerPanel
     h3.ui.header Local worker
     p Status:
-      if running
+      if status
         p Job: {{truncateId _id}} Run: {{truncateId runId}}
         div.ui.tiny.indicating.progress(data-percent="#{progress.percent}")
           div.bar(style="transition-duration: 100ms; width: #{progress.percent}%;")
@@ -81,6 +81,7 @@ template(name="newJobInput")
                 | #{.}
 
 template(name="jobControls")
+  h4 Collection Controls
   div.ui.equal.width.stackable.grid
     div.column
       button.ui.fluid.labeled.icon.button.pause-queue
@@ -138,11 +139,12 @@ template(name="jobTable")
               td(colspan="20" align="center")
                 span.text-info No jobs in collection...
 
-    +jobControls
+      +jobControls
 
     if wideScreen
-      div.ui.right.very.close.rail
+      div.ui.left.very.close.rail
         +workerPanel localWorker
+      div.ui.right.very.close.rail
         +logEntries
     else
       +workerPanel localWorker
@@ -183,12 +185,12 @@ template(name="jobEntry")
     with doc
       td #{type}
       td {{truncateId _id}}
-      td(class="#{futurePast}") #{runAt}
-      td #{lastUpdated}
+      td(class="#{futurePast}") {{relativeTime after}}
+      td {{relativeTime updated}}
       td #{retried} / #{numRetries}
       td #{repeated} / #{numRepeats}
       td
-        if running
+        if equals status "running"
           div.ui.tiny.indicating.progress(data-percent="#{progress.percent}")
             div.bar(style="transition-duration: 100ms; width: #{progress.percent}%;")
             div.label Running #{progress.percent}%
@@ -197,11 +199,11 @@ template(name="jobEntry")
       td.button-column
         if pausable
           +pauseButton
-        if resumable
+        if equals status 'paused'
           +resumeButton
         if restartable
           +restartButton
-        if rerunable
+        if equals status 'completed'
           +rerunButton
         if cancellable
           +cancelButton
@@ -219,7 +221,7 @@ template(name="logEntries")
               div.user #{type} #{jobId}
               if runId
                 div.meta Run: #{runId}
-              div.date #{relativeTime}
+              div.date {{relativeTime time}}
             div.extra.text
               div.ui.message(class="#{level}")
                 i.big.icon(class="#{levelIcon} #{level}")
