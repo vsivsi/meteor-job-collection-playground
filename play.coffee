@@ -26,7 +26,6 @@ if Meteor.isClient
          Meteor.clearTimeout(timeout) if timeout
          timeout = Meteor.setTimeout () ->
                timeout = null
-               console.log $(window).width()
                reactiveWindowWidth.set $(window).width()
             , 100
 

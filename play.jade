@@ -147,8 +147,11 @@ template(name="jobTable")
       div.ui.right.very.close.rail
         +logEntries
     else
-      +workerPanel localWorker
-      +logEntries
+      div.ui.stackable.grid
+        div.eight.wide.column
+          +workerPanel localWorker
+        div.eight.wide.column
+          +logEntries
 
 template(name="pauseButton")
   button.ui.tiny.icon.button.pause-job
