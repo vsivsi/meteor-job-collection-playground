@@ -45,7 +45,7 @@ if Meteor.isClient
       myType = "testJob#{suffix}"
       Meteor.subscribe 'allJobs', userId
       q?.shutdown { level: 'hard' }
-      q = myJobs.processJobs myType, { pollInterval: 100000000 }, (job, cb) ->
+      q = myJobs.processJobs myType, { pollInterval: false, workTimeout: 60*1000 }, (job, cb) ->
          done = 0
          localWorker.set job.doc
          int = Meteor.setInterval (() ->
@@ -376,42 +376,21 @@ if Meteor.isServer
          .repeat({ schedule: myJobs.later.parse.text("every 5 minutes") })
          .save({cancelRepeats: true})
 
-      new Job(myJobs, 'autofail', {})
-         .repeat({ schedule: myJobs.later.parse.text("every 1 minute") })
-         .save({cancelRepeats: true})
-
-      q = myJobs.processJobs ['cleanup', 'autofail'], { pollInterval: 100000000 }, (job, cb) ->
+      q = myJobs.processJobs 'cleanup', { pollInterval: false, workTimeout: 60*1000 }, (job, cb) ->
          current = new Date()
-         switch job.type
-            when 'cleanup'
-               current.setMinutes(current.getMinutes() - 5)
-               ids = myJobs.find({
-                  status:
-                     $in: Job.jobStatusRemovable
-                  updated:
-                     $lt: current},
-                  {fields: { _id: 1 }}).map (d) -> d._id
-               myJobs.removeJobs(ids) if ids.length > 0
-               # console.warn "Removed #{ids.length} old jobs"
-               job.done("Removed #{ids.length} old jobs")
-               cb()
-            when 'autofail'
-               c = 0
-               current.setMinutes(current.getMinutes() - 1)
-               myJobs.find({
-                  status: 'running'
-                  updated:
-                     $lt: current})
-               .forEach (j) ->
-                  c++
-                  j.fail "Timed out by autofail"
-               # console.warn "Failed #{c} stale running jobs"
-               job.done "Failed #{c} stale running jobs"
-               cb()
-            else
-               job.fail "Bad job type in worker"
-               cb()
+         current.setMinutes(current.getMinutes() - 5)
+         ids = myJobs.find({
+            status:
+               $in: Job.jobStatusRemovable
+            updated:
+               $lt: current},
+            {fields: { _id: 1 }}).map (d) -> d._id
+         myJobs.removeJobs(ids) if ids.length > 0
+         # console.warn "Removed #{ids.length} old jobs"
+         job.done("Removed #{ids.length} old jobs")
+         cb()
 
-      myJobs.find({ type: { $in: ['cleanup', 'autofail']}, status: 'ready' })
+      myJobs.find({ type: 'cleanup', status: 'ready' })
          .observe
-            added: () -> q.trigger()
+            added: () ->
+               q.trigger()
