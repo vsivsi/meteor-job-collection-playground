@@ -15,7 +15,10 @@ body
 
 template(name="top")
   div.ui.segment
-    h2.ui.header job-collection Playground App
+    h2.ui.header
+      div.content
+         | job-collection Playground App
+         div.sub.header Connected clients: #{clientsConnected} 
     unless currentUser
       div.ui.info.message
         p

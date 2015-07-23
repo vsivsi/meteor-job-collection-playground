@@ -108,6 +108,9 @@ if Meteor.isClient
      userId: () ->
        Meteor.userId()
 
+     clientsConnected: () ->
+        return stats.findOne('stats').currentClients
+        
    Template.workerPanel.helpers
       jobsProcessed: () ->
          return jobsProcessed.get()
@@ -365,9 +368,11 @@ if Meteor.isServer
             @changed 'jobStats', 'stats',
                jobsProcessed: jobsProcessed
                clientsSeen: Object.keys(clientsSeen).length
+               currentClients: Object.keys(currentClients).length
          @added 'jobStats', 'stats',
             jobsProcessed: jobsProcessed
             clientsSeen: Object.keys(clientsSeen).length
+            currentClients: Object.keys(currentClients).length
          @onStop () =>
             delete currentClients[@connection.id]
          @ready()
