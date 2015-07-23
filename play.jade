@@ -28,16 +28,22 @@ template(name="top")
 
 template(name="workerPanel")
   div.ui.raised.segment#workerPanel
-    h3.ui.header Local worker
+    h3.ui.header
+      div.content
+         | Local worker
+         div.sub.header Jobs processed locally: #{jobsProcessed}
     p Status:
       if status
         p Job: {{truncateId _id}} Run: {{truncateId runId}}
         div.ui.tiny.indicating.progress(data-percent="#{progress.percent}")
           div.bar(style="transition-duration: 100ms; width: #{progress.percent}%;")
           div.label Running #{progress.percent}%
-        button.negative.ui.right.labeled.icon.button.fail-job
+        button.orange.ui.small.right.labeled.icon.button.fail-job
+          i.thumbs.down.icon
+          | Fail
+        button.red.ui.small.right.labeled.icon.button.crash-job
           i.bomb.icon
-          | Abort
+          | Crash
       else
         div.ui.small.grey.label Idle
 
@@ -109,18 +115,26 @@ template(name="jobControls")
 template(name="jobTable")
   div.ui.segment#jobTable
     div.ui.raised.segment
-      h3.ui.header Job Collection
+      h3.ui.header
+         div.content
+            | Job Collection
+            div.sub.header
+               | Total jobs processed: #{jobsProcessed} by #{numWorkers} 
+               if equals numWorkers 1
+                  | worker
+               else
+                  | workers
       div.ui.basic.segment
         u Fine print:
         | Jobs only run when a client is connected. This is because all "work" in this demo is
-        | performed in the client code. If you close or reload this page while a job is
-        | running in your local worker then that job will not complete,
-        | and after a few minutes a "reaper" job on the server will notice and "auto-fail" the
-        | job so it can be retried later. Completed and cancelled jobs are also automatically removed
+        | performed in the client code. If you crash your local worker (or close/reload the page)
+        | while it is processing a job then that run of the job will not complete, and after a few 
+        | minutes the job will time out and "auto-fail" so it can be retried later.
+        | Completed and cancelled jobs are also automatically removed
         | by a "cleanup" job on the server after a short period of time. If you are not signed in,
         | then the job collection you see below is being shared with other public users and will
         | update "live" with their actions. In this demo when you create a new repeating job, all
-        | preexisting running or waiting jobs of that type are automatically cancelled by the server.
+        | preexisting running or waiting jobs of that type are automatically cancelled.
 
       table.ui.celled.striped.table
         thead

@@ -17,6 +17,10 @@ later = myJobs.later
 
 if Meteor.isClient
 
+   stats = new Mongo.Collection 'jobStats'
+   Meteor.subscribe 'clientStats'
+
+   jobsProcessed = new ReactiveVar(0)
    reactiveWindowWidth = new ReactiveVar(0)
 
    Meteor.startup () ->
@@ -49,14 +53,13 @@ if Meteor.isClient
          done = 0
          localWorker.set job.doc
          int = Meteor.setInterval (() ->
-            unless localWorker.get()
-               Meteor.clearInterval int
-               job.fail('User aborted job', () -> cb())
-            else
+            lw = localWorker.get()
+            if lw
                done++
                if done is 20
                   Meteor.clearInterval int
                   localWorker.set null
+                  jobsProcessed.set jobsProcessed.get() + 1
                   job.done()
                   cb()
                else
@@ -67,6 +70,13 @@ if Meteor.isClient
                         job.fail('Progress update failed', () -> cb())
                      else
                         localWorker.set job.doc
+            else if lw is null
+               Meteor.clearInterval int
+               job.fail('User aborted job', () -> cb())
+            else
+               # Simulate a crash
+               Meteor.clearInterval int
+               cb()  # Return without .done or .fail, creating a zombie
          ), 500
       obs = myJobs.find({ type: myType, status: 'ready' })
       .observe
@@ -98,14 +108,24 @@ if Meteor.isClient
      userId: () ->
        Meteor.userId()
 
+   Template.workerPanel.helpers
+      jobsProcessed: () ->
+         return jobsProcessed.get()
+
    Template.workerPanel.events
       'click .fail-job': (e, t) ->
          localWorker.set null
+      'click .crash-job': (e, t) ->
+         localWorker.set false
 
    Template.jobTable.helpers
       jobEntries: () ->
          # Reactively populate the table
          this.find({}, { sort: { after: -1 }})
+      jobsProcessed: () ->
+         return stats.findOne('stats').jobsProcessed
+      numWorkers: () ->
+         return stats.findOne('stats').clientsSeen
 
    handleButtonPopup = () ->
       this.$('.button')
@@ -228,7 +248,7 @@ if Meteor.isClient
             when 'info' then 'info'
             when 'success' then 'trophy'
             when 'warning' then 'warning sign'
-            when 'error' then 'bomb'
+            when 'error' then 'thumbs down'
             else 'bug'
 
    validateCRON = (val) ->
@@ -331,10 +351,26 @@ if Meteor.isServer
 
    Meteor.startup () ->
 
+      jobsProcessed = 0
+      clientsSeen = {}
+      currentClients = {}
+
       # Don't allow users to modify the user docs
       Meteor.users.deny({update: () -> true })
 
       myJobs.startJobServer()
+
+      Meteor.publish 'clientStats', () ->
+         currentClients[@connection.id] = () =>
+            @changed 'jobStats', 'stats',
+               jobsProcessed: jobsProcessed
+               clientsSeen: Object.keys(clientsSeen).length
+         @added 'jobStats', 'stats',
+            jobsProcessed: jobsProcessed
+            clientsSeen: Object.keys(clientsSeen).length
+         @onStop () =>
+            delete currentClients[@connection.id]
+         @ready()
 
       Meteor.publish 'allJobs', (clientUserId) ->
          # This prevents a race condition on the client between Meteor.userId() and subscriptions to this publish
@@ -344,6 +380,14 @@ if Meteor.isServer
             return myJobs.find({ type: "testJob#{suffix}", 'data.owner': this.userId })
          else
             return []
+
+      myJobs.events.on 'jobDone', (msg) ->
+         unless msg.error
+            jobsProcessed++
+            clientsSeen[msg.connection.id] ?= 0
+            clientsSeen[msg.connection.id]++
+            console.warn "Jobs processed: #{jobsProcessed} #{Object.keys(clientsSeen).length}"
+            f() for c, f of currentClients
 
       # Only allow job owners to manage or rerun jobs
       myJobs.allow
