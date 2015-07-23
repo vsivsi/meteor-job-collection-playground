@@ -17,6 +17,8 @@ later = myJobs.later
 
 if Meteor.isClient
 
+   tick = 2500
+
    stats = new Mongo.Collection 'jobStats'
    Meteor.subscribe 'clientStats'
 
@@ -38,10 +40,17 @@ if Meteor.isClient
    reactiveDate = new ReactiveVar new Date()
    localWorker = new ReactiveVar null
 
-   Meteor.setInterval((() -> reactiveDate.set new Date()), 5000)
+   Meteor.setInterval((() -> reactiveDate.set new Date()), tick)
 
    q = null
    myType = 'testJob_null'
+
+   timeFormatter = (time) ->
+      now = reactiveDate.get()
+      if Math.abs(time - now) < tick
+         "Now"
+      else
+         moment(time).from(now)
 
    Tracker.autorun () ->
       userId = Meteor.userId()
@@ -89,8 +98,7 @@ if Meteor.isClient
    Template.registerHelper "wideScreen", () -> reactiveWindowWidth.get() > 1745
 
    Template.registerHelper "relativeTime", (time) ->
-      now = reactiveDate.get()
-      moment(time).from(now)
+      timeFormatter time
 
    Template.registerHelper "equals", (a, b) -> a is b
 
@@ -109,7 +117,7 @@ if Meteor.isClient
        Meteor.userId()
 
      clientsConnected: () ->
-        return stats.findOne('stats')?.currentClients or '?'
+        return stats.findOne('stats')?.currentClients or '0'
 
    Template.workerPanel.helpers
       jobsProcessed: () ->
@@ -126,9 +134,9 @@ if Meteor.isClient
          # Reactively populate the table
          this.find({}, { sort: { after: -1 }})
       jobsProcessed: () ->
-         return stats.findOne('stats')?.jobsProcessed or '?'
+         return stats.findOne('stats')?.jobsProcessed or '0'
       numWorkers: () ->
-         return stats.findOne('stats')?.clientsSeen or '?'
+         return stats.findOne('stats')?.clientsSeen or '0'
 
    handleButtonPopup = () ->
       this.$('.button')
@@ -349,19 +357,22 @@ if Meteor.isClient
 
 if Meteor.isServer
 
-   myJobs.setLogStream process.stdout
+   # myJobs.setLogStream process.stdout
    myJobs.promote 5000
 
    Meteor.startup () ->
-
-      jobsProcessed = 0
-      clientsSeen = {}
-      currentClients = {}
 
       # Don't allow users to modify the user docs
       Meteor.users.deny({update: () -> true })
 
       myJobs.startJobServer()
+
+      jobsProcessed = 0
+      clientsSeen = {}
+      currentClients = {}
+      publishStatsChanges = () ->
+         f() for c, f of currentClients
+         return null
 
       Meteor.publish 'clientStats', () ->
          currentClients[@connection.id] = () =>
@@ -369,13 +380,22 @@ if Meteor.isServer
                jobsProcessed: jobsProcessed
                clientsSeen: Object.keys(clientsSeen).length
                currentClients: Object.keys(currentClients).length
+         @onStop () =>
+            delete currentClients[@connection.id]
+            publishStatsChanges()
          @added 'jobStats', 'stats',
             jobsProcessed: jobsProcessed
             clientsSeen: Object.keys(clientsSeen).length
             currentClients: Object.keys(currentClients).length
-         @onStop () =>
-            delete currentClients[@connection.id]
          @ready()
+         publishStatsChanges()
+
+      myJobs.events.on 'jobDone', (msg) ->
+         unless msg.error or not msg.connection
+            jobsProcessed++
+            clientsSeen[msg.connection.id] ?= 0
+            clientsSeen[msg.connection.id]++
+            publishStatsChanges()
 
       Meteor.publish 'allJobs', (clientUserId) ->
          # This prevents a race condition on the client between Meteor.userId() and subscriptions to this publish
@@ -386,13 +406,8 @@ if Meteor.isServer
          else
             return []
 
-      myJobs.events.on 'jobDone', (msg) ->
-         unless msg.error or not msg.connection
-            jobsProcessed++
-            clientsSeen[msg.connection.id] ?= 0
-            clientsSeen[msg.connection.id]++
-            console.warn "Jobs processed: #{jobsProcessed} #{Object.keys(clientsSeen).length}"
-            f() for c, f of currentClients
+      myJobs.events.on 'error', (msg) ->
+         console.warn "#{new Date()}, #{msg.userId}, #{msg.method}, #{msg.error}\n"
 
       # Only allow job owners to manage or rerun jobs
       myJobs.allow

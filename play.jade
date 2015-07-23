@@ -18,7 +18,7 @@ template(name="top")
     h2.ui.header
       div.content
          | job-collection Playground App
-         div.sub.header Connected clients: #{clientsConnected} 
+         div.sub.header Connected clients: #{clientsConnected}
     unless currentUser
       div.ui.info.message
         p
@@ -122,7 +122,7 @@ template(name="jobTable")
          div.content
             | Job Collection
             div.sub.header
-               | Total jobs processed: #{jobsProcessed} by #{numWorkers} 
+               | Total jobs processed: #{jobsProcessed} by #{numWorkers}
                if equals numWorkers 1
                   | worker
                else
@@ -131,7 +131,7 @@ template(name="jobTable")
         u Fine print:
         | Jobs only run when a client is connected. This is because all "work" in this demo is
         | performed in the client code. If you crash your local worker (or close/reload the page)
-        | while it is processing a job then that run of the job will not complete, and after a few 
+        | while it is processing a job then that run of the job will not complete, and after a few
         | minutes the job will time out and "auto-fail" so it can be retried later.
         | Completed and cancelled jobs are also automatically removed
         | by a "cleanup" job on the server after a short period of time. If you are not signed in,
