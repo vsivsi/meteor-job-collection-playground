@@ -186,7 +186,7 @@ template(name="removeButton")
   div.ui.inverted.popup Remove Job
 
 template(name="readyNowButton")
-  button.ui.tiny.white.circular.icon.button.ready-job
+  button.ui.compact.mini.white.right.floated.circular.icon.button.ready-job
     i.play.green.icon
   div.ui.inverted.popup Ready now
 
@@ -196,9 +196,9 @@ template(name="jobEntry")
       td #{type}
       td {{truncateId _id}}
       td(class="#{futurePast}")
+        | {{relativeTime after}}
         if equals status 'waiting'
           +readyNowButton
-        | {{relativeTime after}}
       td {{relativeTime updated}}
       td #{retried} / #{numRetries}
       td #{repeated} / #{numRepeats}
