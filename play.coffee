@@ -110,7 +110,7 @@ if Meteor.isClient
 
      clientsConnected: () ->
         return stats.findOne('stats').currentClients
-        
+
    Template.workerPanel.helpers
       jobsProcessed: () ->
          return jobsProcessed.get()
@@ -387,7 +387,7 @@ if Meteor.isServer
             return []
 
       myJobs.events.on 'jobDone', (msg) ->
-         unless msg.error
+         unless msg.error or not connection
             jobsProcessed++
             clientsSeen[msg.connection.id] ?= 0
             clientsSeen[msg.connection.id]++
