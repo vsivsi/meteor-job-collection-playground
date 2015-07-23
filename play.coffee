@@ -387,7 +387,7 @@ if Meteor.isServer
             return []
 
       myJobs.events.on 'jobDone', (msg) ->
-         unless msg.error or not connection
+         unless msg.error or not msg.connection
             jobsProcessed++
             clientsSeen[msg.connection.id] ?= 0
             clientsSeen[msg.connection.id]++
