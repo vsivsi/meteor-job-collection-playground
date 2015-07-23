@@ -122,6 +122,7 @@ if Meteor.isClient
    Template.restartButton.onRendered handleButtonPopup
    Template.rerunButton.onRendered handleButtonPopup
    Template.cancelButton.onRendered handleButtonPopup
+   Template.readyNowButton.onRendered handleButtonPopup
 
    Template.jobEntry.events
       'click .cancel-job': (e, t) ->
@@ -142,6 +143,9 @@ if Meteor.isClient
       'click .resume-job': (e, t) ->
          job = Template.currentData()
          job.resume() if job
+      'click .ready-job': (e, t) ->
+         job = Template.currentData()
+         job.ready({ time: myJobs.foreverDate }) if job
 
    isInfinity = (val) ->
       if val > Job.forever - 7199254740935

@@ -127,7 +127,7 @@ template(name="jobTable")
           tr
             th Type
             th Id
-            th Run
+            th Ready to Run
             th Updated
             th Attempts
             th Repeats
@@ -185,12 +185,20 @@ template(name="removeButton")
     i.remove.icon
   div.ui.inverted.popup Remove Job
 
+template(name="readyNowButton")
+  button.ui.tiny.white.circular.icon.button.ready-job
+    i.play.green.icon
+  div.ui.inverted.popup Ready now
+
 template(name="jobEntry")
   tr
     with doc
       td #{type}
       td {{truncateId _id}}
-      td(class="#{futurePast}") {{relativeTime after}}
+      td(class="#{futurePast}")
+        if equals status 'waiting'
+          +readyNowButton
+        | {{relativeTime after}}
       td {{relativeTime updated}}
       td #{retried} / #{numRetries}
       td #{repeated} / #{numRepeats}
