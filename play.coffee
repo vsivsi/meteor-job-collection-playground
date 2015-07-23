@@ -109,7 +109,7 @@ if Meteor.isClient
        Meteor.userId()
 
      clientsConnected: () ->
-        return stats.findOne('stats').currentClients
+        return stats.findOne('stats')?.currentClients or '?'
 
    Template.workerPanel.helpers
       jobsProcessed: () ->
@@ -126,9 +126,9 @@ if Meteor.isClient
          # Reactively populate the table
          this.find({}, { sort: { after: -1 }})
       jobsProcessed: () ->
-         return stats.findOne('stats').jobsProcessed
+         return stats.findOne('stats')?.jobsProcessed or '?'
       numWorkers: () ->
-         return stats.findOne('stats').clientsSeen
+         return stats.findOne('stats')?.clientsSeen or '?'
 
    handleButtonPopup = () ->
       this.$('.button')
