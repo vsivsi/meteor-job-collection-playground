@@ -11,4 +11,6 @@ meteor
 # Now point your browser to http://localhost:3000
 ```
 
-You can also find a hosted version of this app at [http://jcplayground.meteor.com](http://jcplayground.meteor.com)
+You can also find a hosted version of this app at [https://jcplayground.meteor.com](https://jcplayground.meteor.com)
+
+If you are interested in plain node.js workers for job-collection, there is sample worker implementation that will work on jobs hosted by the above server: https://github.com/vsivsi/meteor-job-collection-playground-worker
