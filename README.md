@@ -13,4 +13,4 @@ meteor
 
 You can also find a hosted version of this app at [https://jcplayground.meteor.com](https://jcplayground.meteor.com)
 
-If you are interested in plain node.js workers for job-collection, there is sample worker implementation that will work on jobs hosted by the above server: https://github.com/vsivsi/meteor-job-collection-playground-worker
+If you are interested in plain node.js workers for job-collection, there is a sample worker implementation that will work on jobs hosted by the jcplayground server here: https://github.com/vsivsi/meteor-job-collection-playground-worker
