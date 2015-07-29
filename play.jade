@@ -40,6 +40,7 @@ template(name="workerPanel")
          div.sub.header Jobs processed locally: #{jobsProcessed}
     p Status:
       if status
+        div.ui.small.green.label Running
         p Job: {{truncateId _id}} Run: {{truncateId runId}}
         div.ui.tiny.indicating.progress(data-percent="#{progress.percent}")
           div.bar(style="transition-duration: 100ms; width: #{progress.percent}%;")
