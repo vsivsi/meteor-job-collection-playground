@@ -13,8 +13,6 @@ coffeescript
 mquandalle:jade
 reactive-var
 accounts-ui-unstyled
-semantic:ui
-flemay:less-autoprefixer
 accounts-ui
 standard-minifiers
 meteor-base
@@ -30,3 +28,5 @@ random
 ejson
 spacebars
 check
+semantic:ui
+flemay:less-autoprefixer
