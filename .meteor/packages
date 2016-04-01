@@ -14,7 +14,6 @@ mquandalle:jade
 reactive-var
 accounts-ui-unstyled
 accounts-ui
-standard-minifiers
 meteor-base
 mobile-experience
 mongo
@@ -30,3 +29,5 @@ spacebars
 check
 semantic:ui
 flemay:less-autoprefixer
+standard-minifier-css
+standard-minifier-js
