@@ -52,6 +52,16 @@ if Meteor.isClient
       else
          moment(time).from(now)
 
+   # Ensure that the callback is not called multiple times
+   once = (func) ->
+      called = false
+      return () ->
+         unless called
+            called = true
+            func()
+         else
+            console.warn("Callback invoked multiple times!")
+
    Tracker.autorun () ->
       userId = Meteor.userId()
       suffix = if userId then "_#{userId.substr(0,5)}" else ""
@@ -70,22 +80,22 @@ if Meteor.isClient
                   localWorker.set null
                   jobsProcessed.set jobsProcessed.get() + 1
                   job.done()
-                  cb()
+                  once(cb)()
                else
                   job.progress done, 20, (err, res) ->
                      if err or not res
                         Meteor.clearInterval int
                         localWorker.set null
-                        job.fail('Progress update failed', () -> cb())
+                        job.fail('Progress update failed', once(cb))
                      else
                         localWorker.set job.doc
             else if lw is null
                Meteor.clearInterval int
-               job.fail('User aborted job', () -> cb())
+               job.fail('User aborted job', once(cb))
             else
                # Simulate a crash
                Meteor.clearInterval int
-               cb()  # Return without .done or .fail, creating a zombie
+               once(cb)()  # Return without .done or .fail, creating a zombie
          ), 500
       obs = myJobs.find({ type: myType, status: 'ready' })
       .observe
