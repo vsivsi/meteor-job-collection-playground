@@ -62,6 +62,9 @@ if Meteor.isClient
          else
             console.warn("Callback invoked multiple times!")
 
+   nextStep = (func) ->
+      Meteor.setTimeout(func, 500)
+
    Tracker.autorun () ->
       userId = Meteor.userId()
       suffix = if userId then "_#{userId.substr(0,5)}" else ""
@@ -71,32 +74,29 @@ if Meteor.isClient
       q = myJobs.processJobs myType, { pollInterval: false, workTimeout: 60*1000 }, (job, cb) ->
          done = 0
          localWorker.set job.doc
-         int = Meteor.setInterval (() ->
+         workStep = () ->
             lw = localWorker.get()
             if lw
                done++
                if done is 20
-                  Meteor.clearInterval int
                   localWorker.set null
                   jobsProcessed.set jobsProcessed.get() + 1
-                  job.done()
-                  once(cb)()
+                  job.done(once(cb))
                else
                   job.progress done, 20, (err, res) ->
                      if err or not res
-                        Meteor.clearInterval int
                         localWorker.set null
                         job.fail('Progress update failed', once(cb))
                      else
                         localWorker.set job.doc
+                        nextStep workStep
             else if lw is null
-               Meteor.clearInterval int
                job.fail('User aborted job', once(cb))
             else
                # Simulate a crash
-               Meteor.clearInterval int
                once(cb)()  # Return without .done or .fail, creating a zombie
-         ), 500
+         workStep()
+
       obs = myJobs.find({ type: myType, status: 'ready' })
       .observe
          added: () -> q.trigger()
