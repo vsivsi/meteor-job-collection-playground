@@ -174,7 +174,7 @@ if Meteor.isClient
          job.remove() if job
       'click .restart-job': (e, t) ->
          job = Template.currentData()
-         job.restart() if job
+         job.restart({ retries: if job._doc.retries then 0 else 1 }) if job
       'click .rerun-job': (e, t) ->
          job = Template.currentData()
          job.rerun({ wait: 15000 }) if job
