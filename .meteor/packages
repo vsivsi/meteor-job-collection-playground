@@ -9,7 +9,7 @@ vsivsi:job-collection
 numeral:numeral
 momentjs:moment
 accounts-password@1.3.3
-coffeescript@1.12.0_1
+coffeescript@1.11.1_4
 mquandalle:jade
 reactive-var@1.0.11
 accounts-ui-unstyled@1.1.13
