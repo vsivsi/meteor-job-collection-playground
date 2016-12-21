@@ -250,3 +250,4 @@ client/lib/semantic-ui/themes/default/views/item.overrides.import.less
 client/lib/semantic-ui/themes/default/views/item.variables.import.less
 client/lib/semantic-ui/themes/default/views/statistic.overrides.import.less
 client/lib/semantic-ui/themes/default/views/statistic.variables.import.less
+node_modules
