@@ -7,6 +7,7 @@ To run locally (assuming you have Meteor.js [installed](https://www.meteor.com/i
 ```bash
 git clone https://github.com/vsivsi/meteor-job-collection-playground.git jcPlay
 cd jcPlay
+meteor npm install
 meteor
 # Now point your browser to http://localhost:3000
 ```
